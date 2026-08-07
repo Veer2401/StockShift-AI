@@ -158,17 +158,26 @@ export interface WarehouseOptimizationResponse {
 /* ── API calls ────────────────────────────────────────────────────────────── */
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options?.headers,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`AI API error: ${res.status} ${res.statusText}`);
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`AI API error: ${res.status} ${res.statusText}`);
+    }
+    return await res.json();
+  } catch (err: any) {
+    if (err?.message?.includes("fetch") || err?.name === "TypeError") {
+      throw new Error(
+        "AI Backend server is not running. Please start the Python AI server (cd backend && python app.py) on port 5001."
+      );
+    }
+    throw err;
   }
-  return res.json();
 }
 
 /** Get top AI recommendations across all SKUs. */

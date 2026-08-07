@@ -1,258 +1,315 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useInventory } from "@/_lib/inventory-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
 import { Button } from "@/_components/ui/button";
 import { Badge } from "@/_components/ui/badge";
-import { getCostOptimization, type CostOptimizationResponse } from "@/_lib/ai-service";
-import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Sparkles, RefreshCw } from "lucide-react";
+import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Sparkles, Plus, Package } from "lucide-react";
+import Link from "next/link";
+import { formatCurrency } from "@/_lib/utils";
 
 export default function CostOptimizationPage() {
-  const [data, setData] = useState<CostOptimizationResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { items: inventoryItems, isLoading } = useInventory();
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await getCostOptimization();
-      setData(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load cost optimization data");
-    } finally {
-      setLoading(false);
+  // Dynamically compute cost optimization metrics from real user inventory
+  const costMetrics = useMemo(() => {
+    if (inventoryItems.length === 0) {
+      return null;
     }
-  };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+    const totalCapitalLocked = inventoryItems.reduce(
+      (sum, item) => sum + item.unitCost * item.quantity,
+      0
+    );
 
-  if (loading) {
+    const overstockItems = inventoryItems.filter(
+      (item) => item.quantity > item.reorderPoint * 2.5
+    );
+
+    const overstockCapital = overstockItems.reduce(
+      (sum, item) => sum + item.unitCost * Math.max(0, item.quantity - item.reorderPoint * 2),
+      0
+    );
+
+    const stockoutRiskItems = inventoryItems.filter(
+      (item) => item.quantity <= item.reorderPoint
+    );
+
+    const stockoutRiskCost = stockoutRiskItems.reduce(
+      (sum, item) => sum + item.sellPrice * Math.max(1, item.reorderPoint - item.quantity),
+      0
+    );
+
+    const holdingCostMonthly = totalCapitalLocked * 0.02; // Standard 2% monthly holding cost
+    const potentialSavings = overstockCapital * 0.15 + stockoutRiskCost * 0.25;
+
+    // Build dynamic AI recommendations
+    const recommendations: Array<{ action: string; impact: string; priority: "high" | "medium" | "low" }> = [];
+
+    stockoutRiskItems.forEach((item) => {
+      recommendations.push({
+        action: `Reorder stock for ${item.name} (${item.sku}). Current stock (${item.quantity}) is below reorder threshold (${item.reorderPoint}).`,
+        impact: `Prevents potential revenue loss of ${formatCurrency(item.sellPrice * (item.reorderPoint - item.quantity + 5))}`,
+        priority: item.quantity === 0 ? "high" : "medium",
+      });
+    });
+
+    overstockItems.forEach((item) => {
+      recommendations.push({
+        action: `Reduce purchase order volume for ${item.name} (${item.sku}). Excess inventory of ${item.quantity - item.reorderPoint * 2} units detected.`,
+        impact: `Frees up ${formatCurrency(item.unitCost * (item.quantity - item.reorderPoint * 2))} in working capital`,
+        priority: "high",
+      });
+    });
+
+    if (recommendations.length === 0) {
+      recommendations.push({
+        action: "Inventory levels across all product SKUs are currently optimal.",
+        impact: "Holding costs and stockout risks are balanced.",
+        priority: "low",
+      });
+    }
+
+    return {
+      totalCapitalLocked,
+      overstockCapital,
+      stockoutRiskCost,
+      holdingCostMonthly,
+      potentialSavings,
+      overstockItems,
+      stockoutRiskItems,
+      recommendations,
+    };
+  }, [inventoryItems]);
+
+  if (isLoading) {
     return (
-      <div className="p-6 flex items-center justify-center h-full">
-        <div className="flex items-center gap-3 text-lg">
-          <RefreshCw className="w-5 h-5 animate-spin" />
-          <span>Analyzing financial impact...</span>
-        </div>
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground text-sm">Analyzing inventory database...</p>
       </div>
     );
   }
 
-  if (error || !data) {
+  // Clean empty state when no items added yet
+  if (inventoryItems.length === 0 || !costMetrics) {
     return (
-      <div className="p-6">
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="pt-6">
-            <p className="text-red-700">{error || "No data available"}</p>
-          </CardContent>
+      <div className="p-6 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground">
+            <DollarSign className="w-7 h-7 text-emerald-600" />
+            Cost Optimization Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Real-time capital, holding cost, and overstock analysis.
+          </p>
+        </div>
+
+        <Card className="border-2 border-dashed border-emerald-500/30 bg-card/60 p-8 text-center shadow-none">
+          <div className="mx-auto flex max-w-md flex-col items-center justify-center space-y-3">
+            <div className="rounded-full bg-emerald-500/10 p-4 text-emerald-600">
+              <Package className="h-8 w-8" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground">No Inventory Items Found</h3>
+            <p className="text-sm text-muted-foreground">
+              Your cost optimization dashboard dynamically tracks capital locked, overstock risks, and holding costs once products are added to your database.
+            </p>
+            <Link href="/admin/dashboard">
+              <Button className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+                <Plus className="h-4 w-4 mr-2" /> Add Inventory Items
+              </Button>
+            </Link>
+          </div>
         </Card>
       </div>
     );
   }
 
-  const formatCurrency = (val: number) => `₹${val.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
   return (
     <div className="p-6 space-y-6 overflow-auto h-full">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <DollarSign className="w-8 h-8" />
-            Cost Optimization Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Financial impact analysis powered by AI
-          </p>
-        </div>
-        <Button onClick={fetchData} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" />
-          Refresh
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
+          <DollarSign className="w-8 h-8 text-emerald-600" />
+          Cost Optimization Dashboard
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Real-time capital, holding cost, and overstock analysis calculated from your inventory database.
+        </p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border bg-gray-50">
+        <Card className="border-border/60 shadow-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
-              <DollarSign className="w-4 h-4" />
+              <DollarSign className="w-4 h-4 text-blue-600" />
               Total Capital Locked
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              {formatCurrency(data.total_capital_locked)}
+              {formatCurrency(costMetrics.totalCapitalLocked)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Current inventory value</p>
+            <p className="text-xs text-muted-foreground mt-1">Current inventory valuation</p>
           </CardContent>
         </Card>
 
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-border/60 shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-orange-700 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-amber-600 flex items-center gap-2">
               <TrendingDown className="w-4 h-4" />
               Overstock Capital
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-900">
-              {formatCurrency(data.overstock_capital)}
+            <div className="text-2xl font-bold text-amber-600">
+              {formatCurrency(costMetrics.overstockCapital)}
             </div>
-            <p className="text-xs text-orange-600 mt-1">
-              {data.skus_overstock.length} items overstocked
+            <p className="text-xs text-muted-foreground mt-1">
+              {costMetrics.overstockItems.length} items overstocked
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-border/60 shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-red-700 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-rose-600 flex items-center gap-2">
               <AlertTriangle className="w-4 h-4" />
               Stockout Risk Cost
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-900">
-              {formatCurrency(data.stockout_risk_cost)}
+            <div className="text-2xl font-bold text-rose-600">
+              {formatCurrency(costMetrics.stockoutRiskCost)}
             </div>
-            <p className="text-xs text-red-600 mt-1">
-              {data.skus_stockout_risk.length} items at risk
+            <p className="text-xs text-muted-foreground mt-1">
+              {costMetrics.stockoutRiskItems.length} items at reorder threshold
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-green-200 bg-green-50">
+        <Card className="border-border/60 shadow-none">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-700 flex items-center gap-2">
+            <CardTitle className="text-sm font-medium text-emerald-600 flex items-center gap-2">
               <TrendingUp className="w-4 h-4" />
               Potential Monthly Savings
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-900">
-              {formatCurrency(data.potential_savings)}
+            <div className="text-2xl font-bold text-emerald-600">
+              {formatCurrency(costMetrics.potentialSavings)}
             </div>
-            <p className="text-xs text-green-600 mt-1">By optimizing stock</p>
+            <p className="text-xs text-muted-foreground mt-1">By optimizing reorders &amp; stock</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Holding Cost */}
-      <Card>
+      <Card className="border-border/60 shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-foreground" />
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Sparkles className="w-5 h-5 text-emerald-600" />
             Monthly Holding Cost Analysis
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Current Monthly Holding Cost (2% of inventory)</span>
-              <span className="font-semibold">{formatCurrency(data.holding_cost_monthly)}</span>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Current Monthly Holding Cost (2% of inventory value)</span>
+              <span className="font-semibold">{formatCurrency(costMetrics.holdingCostMonthly)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Annualized Holding Cost</span>
-              <span className="font-semibold text-orange-700">{formatCurrency(data.holding_cost_monthly * 12)}</span>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Annualized Holding Cost</span>
+              <span className="font-semibold text-amber-600">{formatCurrency(costMetrics.holdingCostMonthly * 12)}</span>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t">
-              <span className="text-sm font-medium">Potential Annual Savings</span>
-              <span className="font-bold text-green-700 text-lg">{formatCurrency(data.potential_savings * 12)}</span>
+            <div className="flex justify-between items-center pt-2 border-t text-sm">
+              <span className="font-medium">Potential Annual Savings</span>
+              <span className="font-bold text-emerald-600 text-base">{formatCurrency(costMetrics.potentialSavings * 12)}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* AI Recommendations */}
-      <Card className="border-border">
+      <Card className="border-border/60 shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-foreground" />
-            AI-Powered Recommendations
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Sparkles className="w-5 h-5 text-emerald-600" />
+            Prioritized Cost Optimization Actions
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {data.recommendations.length === 0 &&
-          data.skus_overstock.length === 0 &&
-          data.skus_stockout_risk.length === 0 ? (
-            <p className="text-muted-foreground italic">
-              No specific recommendations right now. Your inventory levels look within normal range.
-              Try &quot;Refresh&quot; for a fresh AI analysis or check back after inventory changes.
-            </p>
-          ) : data.recommendations.length === 0 ? (
-            <p className="text-muted-foreground italic">No recommendations at this time.</p>
-          ) : (
-            <div className="space-y-3">
-              {data.recommendations.map((rec, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-lg border bg-gradient-to-r from-gray-50 to-slate-50 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge
-                          variant={
-                            rec.priority === "high"
-                              ? "destructive"
-                              : rec.priority === "medium"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {rec.priority.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="font-medium mb-1">{rec.action}</p>
-                      <p className="text-sm text-green-700 font-semibold">💰 Impact: {rec.impact}</p>
+          <div className="space-y-3">
+            {costMetrics.recommendations.map((rec, idx) => (
+              <div
+                key={idx}
+                className="p-4 rounded-lg border border-border/60 bg-muted/20 hover:bg-muted/40 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="secondary"
+                        className={
+                          rec.priority === "high"
+                            ? "bg-rose-50 text-rose-600 border-0"
+                            : rec.priority === "medium"
+                            ? "bg-amber-50 text-amber-600 border-0"
+                            : "bg-emerald-50 text-emerald-600 border-0"
+                        }
+                      >
+                        {rec.priority.toUpperCase()} PRIORITY
+                      </Badge>
                     </div>
+                    <p className="font-medium text-sm text-foreground">{rec.action}</p>
+                    <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">💰 Impact: {rec.impact}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
       {/* Overstock & Stockout Lists */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="border-orange-200">
+        <Card className="border-border/60 shadow-none">
           <CardHeader>
-            <CardTitle className="text-orange-700">Overstocked Items</CardTitle>
+            <CardTitle className="text-sm font-semibold text-amber-600">Overstocked Products</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.skus_overstock.length === 0 ? (
-              <p className="text-muted-foreground italic">No overstocked items</p>
+            {costMetrics.overstockItems.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">No overstocked items detected.</p>
             ) : (
-              <ul className="space-y-2">
-                {data.skus_overstock.map((sku) => (
-                  <li key={sku} className="text-sm bg-orange-50 px-3 py-2 rounded border border-orange-200">
-                    {sku}
-                  </li>
+              <div className="space-y-2">
+                {costMetrics.overstockItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center text-xs bg-amber-500/10 px-3 py-2 rounded border border-amber-500/20">
+                    <span className="font-medium text-foreground">{item.name} ({item.sku})</span>
+                    <span className="text-amber-600 font-semibold">{item.quantity} in stock</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </CardContent>
         </Card>
 
-        <Card className="border-red-200">
+        <Card className="border-border/60 shadow-none">
           <CardHeader>
-            <CardTitle className="text-red-700">Stockout Risk Items</CardTitle>
+            <CardTitle className="text-sm font-semibold text-rose-600">Stockout Risk Products</CardTitle>
           </CardHeader>
           <CardContent>
-            {data.skus_stockout_risk.length === 0 ? (
-              <p className="text-muted-foreground italic">No stockout risks</p>
+            {costMetrics.stockoutRiskItems.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic">No stockout risks detected.</p>
             ) : (
-              <ul className="space-y-2">
-                {data.skus_stockout_risk.map((sku) => (
-                  <li key={sku} className="text-sm bg-red-50 px-3 py-2 rounded border border-red-200">
-                    {sku}
-                  </li>
+              <div className="space-y-2">
+                {costMetrics.stockoutRiskItems.map((item) => (
+                  <div key={item.id} className="flex justify-between items-center text-xs bg-rose-500/10 px-3 py-2 rounded border border-rose-500/20">
+                    <span className="font-medium text-foreground">{item.name} ({item.sku})</span>
+                    <span className="text-rose-600 font-semibold">{item.quantity} in stock</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </CardContent>
         </Card>

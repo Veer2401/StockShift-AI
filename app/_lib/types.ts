@@ -4,6 +4,10 @@ export interface User {
   email: string;
   role: "admin";
   avatar?: string;
+  companyName?: string;
+  state?: string;
+  city?: string;
+  onboardingCompleted?: boolean;
 }
 
 export interface InventoryItem {

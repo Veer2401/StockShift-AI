@@ -17,6 +17,8 @@ import {
   DollarSign,
   Target,
   Warehouse,
+  MapPin,
+  Building2,
 } from "lucide-react";
 import { useAuth } from "@/_lib/auth-context";
 import { BrandMark } from "@/_components/brand-mark";
@@ -53,8 +55,6 @@ const sidebarSections = [
     ],
   },
 ];
-
-const allItems = sidebarSections.flatMap((s) => s.items);
 
 function getInitials(name: string): string {
   return name
@@ -113,7 +113,7 @@ function BottomSection({
             {user?.name}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {user?.email}
+            {user?.companyName || user?.email}
           </p>
         </div>
         <ChevronUp
@@ -180,10 +180,14 @@ export default function AdminLayout({
   }, []);
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== "admin")) {
-      router.replace("/login");
+    if (!isLoading) {
+      if (!isAuthenticated || user?.role !== "admin") {
+        router.replace("/login");
+      } else if (!user.onboardingCompleted && pathname !== "/admin/onboarding") {
+        router.replace("/admin/onboarding");
+      }
     }
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [isLoading, isAuthenticated, user, pathname, router]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -191,6 +195,11 @@ export default function AdminLayout({
 
   if (isLoading || !isAuthenticated || user?.role !== "admin") {
     return null;
+  }
+
+  // If on onboarding screen, render fullscreen onboarding content without sidebar
+  if (pathname === "/admin/onboarding") {
+    return <div className="min-h-screen bg-background">{children}</div>;
   }
 
   const SidebarContent = () => (
@@ -254,8 +263,8 @@ export default function AdminLayout({
       className="flex h-screen overflow-hidden text-foreground p-3 gap-3"
       style={{
         background: "linear-gradient(135deg, #B8FFD0 0%, #FFF6C9 100%)",
-        fontFamily: 'var(--font-inter), sans-serif',
-        fontSize: '110%',
+        fontFamily: "var(--font-inter), sans-serif",
+        fontSize: "110%",
       }}
     >
       {/* Mobile overlay */}
@@ -284,7 +293,7 @@ export default function AdminLayout({
       {/* Main content area */}
       <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm shadow-sm border border-white/50">
         {/* Welcome header */}
-        <header className="flex h-14 shrink-0 items-center justify-between px-4 sm:px-6">
+        <header className="flex h-14 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-black/5">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -294,15 +303,15 @@ export default function AdminLayout({
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-base text-foreground">
-              Welcome, {user?.name?.split(" ")[0] ?? "User"}
+            <h1 className="text-sm font-medium text-foreground">
+              Welcome back, <span className="font-semibold">{user?.name?.split(" ")[0] ?? "User"}</span>
             </h1>
           </div>
         </header>
 
         {/* Page content */}
         <main ref={mainRef} className="flex-1 overflow-y-auto min-h-0">
-          <div ref={contentRef} className="p-4 pt-0 sm:p-6 sm:pt-0">
+          <div ref={contentRef} className="p-4 pt-4 sm:p-6 sm:pt-6">
             {children}
           </div>
         </main>

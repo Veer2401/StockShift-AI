@@ -18,8 +18,6 @@ import time
 from datetime import datetime
 from threading import Lock
 
-import firebase_admin
-from firebase_admin import credentials, firestore
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from openai import OpenAI
@@ -32,25 +30,17 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# ── Firebase init ────────────────────────────────────────────────────────────
+# ── OpenRouter setup with Load Balancing & Failover ──────────────────────────
 
-key_path = os.path.join(os.path.dirname(__file__), "serviceAccountKey.json")
-if os.path.exists(key_path):
-    cred = credentials.Certificate(key_path)
-    firebase_admin.initialize_app(cred)
-    db = firestore.client()
-else:
-    db = None
-    print("⚠️  serviceAccountKey.json not found — running without Firestore")
+raw_keys = os.getenv("OPENROUTER_API_KEYS", "")
+if not raw_keys:
+    k1 = os.getenv("OPENROUTER_API_KEY", "").strip()
+    k2 = os.getenv("OPENROUTER_BACKUP_API_KEY", "").strip()
+    raw_keys = f"{k1},{k2}"
 
-# ── OpenRouter client ────────────────────────────────────────────────────────
+API_KEYS = [k.strip() for k in raw_keys.split(",") if k.strip()]
 
-openrouter_client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY", ""),
-)
-
-MODEL = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-001")
+MODEL = os.getenv("OPENROUTER_MODEL", "google/gemini-2.0-flash-01")
 
 # ── In-memory response cache (TTL = 5 minutes) ───────────────────────────────
 
@@ -114,57 +104,13 @@ def _extract_json(raw: str) -> dict | None:
 
 
 def get_all_sku_stats() -> list[dict]:
-    """Fetch metadata + stats for every SKU from Firestore."""
-    if not db:
-        return _get_fallback_stats()
-
-    docs = db.collection("inventory_history").stream()
-    results = []
-    for doc in docs:
-        data = doc.to_dict()
-        if data and "metadata" in data and "stats" in data:
-            results.append({
-                "sku": doc.id,
-                **data["metadata"],
-                **data["stats"],
-            })
-    return results
+    """Fetch metadata + stats for every SKU."""
+    return _get_fallback_stats()
 
 
 def get_sku_data(sku: str) -> dict | None:
     """Fetch full data for a single SKU."""
-    if not db:
-        return _get_fallback_sku(sku)
-
-    doc = db.collection("inventory_history").document(sku).get()
-    if not doc.exists:
-        return None
-
-    data = doc.to_dict()
-
-    # Also fetch recent daily data (last 3 months)
-    daily_docs = (
-        db.collection("inventory_history")
-        .document(sku)
-        .collection("daily_data")
-        .order_by("__name__", direction=firestore.Query.DESCENDING)
-        .limit(3)
-        .stream()
-    )
-
-    recent_daily = []
-    for ddoc in daily_docs:
-        records = ddoc.to_dict().get("records", [])
-        recent_daily.extend(records)
-
-    recent_daily.sort(key=lambda r: r["date"])
-
-    return {
-        "sku": sku,
-        **data.get("metadata", {}),
-        **data.get("stats", {}),
-        "recent_daily": recent_daily[-90:],  # last 90 days
-    }
+    return _get_fallback_sku(sku)
 
 
 # ── Fallback: use local JSON if Firestore is unavailable ────────────────────
@@ -214,22 +160,35 @@ def _get_fallback_sku(sku: str) -> dict | None:
 
 
 def call_llm(system_prompt: str, user_prompt: str) -> str:
-    """Send a prompt to OpenRouter and return the response text."""
-    try:
-        response = openrouter_client.chat.completions.create(
-            model=MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.1,  # Lower for faster, more deterministic responses
-            max_tokens=1000,  # Reduced for speed
-            timeout=25,  # 25 second timeout
-        )
-        return response.choices[0].message.content or ""
-    except Exception as e:
-        print(f"LLM error: {e}")
+    """Send a prompt to OpenRouter with automatic API key failover & load balancing."""
+    if not API_KEYS:
+        print("⚠️ No OpenRouter API key configured.")
         return ""
+
+    for idx, key in enumerate(API_KEYS):
+        try:
+            client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=key,
+            )
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0.1,
+                max_tokens=1000,
+                timeout=25,
+            )
+            content = response.choices[0].message.content or ""
+            if content:
+                return content
+        except Exception as e:
+            print(f"⚠️ OpenRouter Key #{idx+1} failed ({e}). Trying fallback key...")
+            continue
+
+    return ""
 
 
 # ── Helper: build context prompt from stats ──────────────────────────────────
@@ -307,7 +266,7 @@ def build_all_skus_context(all_stats: list[dict]) -> str:
 
 @app.route("/api/health", methods=["GET"])
 def health():
-    return jsonify({"status": "ok", "firestore": db is not None})
+    return jsonify({"status": "ok", "supabase": True, "llm": "OpenRouter"})
 
 
 @app.route("/api/insights", methods=["GET"])

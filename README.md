@@ -63,7 +63,7 @@ There are **no cron jobs, no background workers, and no CI/CD pipelines** in the
 | Layer        | Tech |
 |-------------|------|
 | Frontend    | Next.js 14 (App Router), React 18, TypeScript, Tailwind, shadcn/ui, Motion, Lenis, Recharts |
-| Auth        | Local mock auth (email/password); Supabase migration pending |
+| Auth        | Supabase Auth (Custom Email/Password & Google Sign-In) with `profiles` Postgres database sync |
 | Frontend data | localStorage (inventory + transactions); mock data + finance-analytics for finance |
 | Backend     | Flask 3, Flask-CORS, Gunicorn |
 | AI          | OpenRouter (e.g. `google/gemini-2.0-flash-001`) |
@@ -79,6 +79,17 @@ There are **no cron jobs, no background workers, and no CI/CD pipelines** in the
 
 ---
 
+## Netlify Deployment & Supabase Custom Domain
+
+When deploying to **Netlify**:
+1. **Environment Variables**: Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to Netlify Environment Variables.
+2. **Supabase Auth Redirect URLs**: In Supabase Dashboard → **Authentication** → **URL Configuration**, add your production Netlify URL (e.g. `https://your-app.netlify.app/auth/callback`).
+3. **Google OAuth Redirect URI**: In Google Cloud Console Credentials, add `https://your-app.netlify.app/auth/callback` to Authorized Redirect URIs.
+4. **Custom Domain (Optional)**: If you use a custom domain (e.g. `stockshift.com`), connect a custom subdomain in Supabase (**Project Settings** → **Custom Domains**) to replace `xxxx.supabase.co` with your branded domain name on the Google Sign-in popup.
+
+---
+
 ## Summary
 
 MindForge delivers **demand forecasting**, **smart reorder and anomaly alerts**, **cost and warehouse optimization**, and **scenario planning** by automating LLM-based analysis over your inventory data. The frontend automates persistence (localStorage) and in-app recommendations; the backend automates AI answers and response caching. Historical data is generated and seeded via two manual scripts; there is no scheduled batch or worker automation.
+

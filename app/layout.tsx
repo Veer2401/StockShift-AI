@@ -25,7 +25,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.variable}>
+      <body className={`font-sans ${inter.variable} antialiased bg-background text-foreground`}>
         <LenisProvider>
           <AuthProvider>
             <InventoryProvider>{children}</InventoryProvider>

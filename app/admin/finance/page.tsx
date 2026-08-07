@@ -2,8 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useInventory } from "@/_lib/inventory-context";
-import { financialSummaries, categorySpending, forecastData } from "@/_lib/mock-data";
-import { formatCurrency } from "@/_lib/utils";
+import { formatCurrency, formatDate } from "@/_lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/_components/ui/tabs";
 import {
   Card,
@@ -39,9 +38,10 @@ import {
   Calculator,
   Target,
   Sparkles,
+  Package,
 } from "lucide-react";
 import type { AiRecommendation, CostEntry, YearlyForecastSummary } from "@/_lib/types";
-import { formatDate } from "@/_lib/utils";
+import { generateAiLikeRecommendations } from "@/_lib/ai-finance";
 
 const CHART_COLORS = [
   "hsl(217, 91%, 60%)",
@@ -63,84 +63,90 @@ const tooltipStyle = {
 };
 
 export default function FinancePage() {
-  const { items: inventoryItems } = useInventory();
+  const { items: inventoryItems, transactions } = useInventory();
 
   const [growthRate, setGrowthRate] = useState(10);
-  const [recommendations, setRecommendations] = useState<AiRecommendation[]>([]);
   const [recommendationHorizon, setRecommendationHorizon] = useState<30 | 60 | 90>(30);
   const [recLoading, setRecLoading] = useState(false);
   const [recError, setRecError] = useState<string | null>(null);
 
   const [costEntries, setCostEntries] = useState<CostEntry[]>([]);
   const [costsLoading, setCostsLoading] = useState(false);
-  const [costsError, setCostsError] = useState<string | null>(null);
 
   const [yearlySummary, setYearlySummary] = useState<YearlyForecastSummary | null>(null);
-  const [forecastLoading, setForecastLoading] = useState(false);
-  const [forecastError, setForecastError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setRecLoading(true);
-    setRecError(null);
-    fetch(`/api/finance/recommendations?horizon=${recommendationHorizon}`, {
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load recommendations");
-        const data = await res.json();
-        setRecommendations(data.recommendations ?? []);
-      })
-      .catch((err) => {
-        if (err.name !== "AbortError") {
-          setRecError("Could not load recommendations right now.");
-        }
-      })
-      .finally(() => setRecLoading(false));
+  // Calculate AI Recommendations strictly from user's actual inventory items
+  const recommendations = useMemo(() => {
+    if (inventoryItems.length === 0) return [];
+    return generateAiLikeRecommendations({
+      items: inventoryItems,
+      transactions,
+      horizonDays: recommendationHorizon,
+    });
+  }, [inventoryItems, transactions, recommendationHorizon]);
 
-    return () => controller.abort();
-  }, [recommendationHorizon]);
+  // Dynamically calculate Category Spending & Budget from user's inventory
+  const categorySpending = useMemo(() => {
+    const map: Record<string, number> = {};
+    inventoryItems.forEach((item) => {
+      const val = item.unitCost * item.quantity;
+      map[item.category] = (map[item.category] || 0) + val;
+    });
+    return Object.entries(map).map(([category, amount]) => ({
+      category,
+      amount,
+      budget: Math.round(amount * 1.25) || 10000,
+    }));
+  }, [inventoryItems]);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setCostsLoading(true);
-    setCostsError(null);
-    fetch("/api/finance/costs", { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load costs");
-        const data = await res.json();
-        setCostEntries(data.costs ?? []);
-      })
-      .catch((err) => {
-        if (err.name !== "AbortError") {
-          setCostsError("Could not load cost entries right now.");
-        }
-      })
-      .finally(() => setCostsLoading(false));
+  // Dynamically calculate Monthly Summaries from transactions & stock
+  const financialSummaries = useMemo(() => {
+    if (inventoryItems.length === 0 && transactions.length === 0) {
+      return [];
+    }
 
-    return () => controller.abort();
-  }, []);
+    const currentTotalCost = inventoryItems.reduce((s, i) => s + i.unitCost * i.quantity, 0);
+    const currentTotalRevenue = inventoryItems.reduce((s, i) => s + i.sellPrice * i.quantity, 0);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setForecastLoading(true);
-    setForecastError(null);
-    fetch("/api/finance/forecast", { signal: controller.signal })
-      .then(async (res) => {
-        if (!res.ok) throw new Error("Failed to load forecast");
-        const data = await res.json();
-        setYearlySummary(data.yearly ?? null);
-      })
-      .catch((err) => {
-        if (err.name !== "AbortError") {
-          setForecastError("Could not load yearly P&L forecast right now.");
-        }
-      })
-      .finally(() => setForecastLoading(false));
+    if (transactions.length === 0) {
+      const currentMonth = new Date().toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      return [
+        {
+          month: currentMonth,
+          revenue: currentTotalRevenue,
+          costs: currentTotalCost,
+          profit: Math.max(0, currentTotalRevenue - currentTotalCost),
+          itemsSold: 0,
+          itemsPurchased: inventoryItems.reduce((s, i) => s + i.quantity, 0),
+        },
+      ];
+    }
 
-    return () => controller.abort();
-  }, []);
+    const map: Record<string, { month: string; revenue: number; costs: number; profit: number; itemsSold: number; itemsPurchased: number }> = {};
+    transactions.forEach((tx) => {
+      const date = new Date(tx.date);
+      const monthStr = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+      if (!map[monthStr]) {
+        map[monthStr] = { month: monthStr, revenue: 0, costs: 0, profit: 0, itemsSold: 0, itemsPurchased: 0 };
+      }
+      const item = inventoryItems.find((i) => i.id === tx.itemId || i.name === tx.itemName);
+      const unitCost = item ? item.unitCost : 100;
+      const sellPrice = item ? item.sellPrice : 150;
 
+      if (tx.type === "in") {
+        map[monthStr].costs += tx.quantity * unitCost;
+        map[monthStr].itemsPurchased += tx.quantity;
+      } else {
+        map[monthStr].revenue += tx.quantity * sellPrice;
+        map[monthStr].itemsSold += tx.quantity;
+      }
+      map[monthStr].profit = map[monthStr].revenue - map[monthStr].costs;
+    });
+
+    return Object.values(map);
+  }, [inventoryItems, transactions]);
+
+  // Top 5 Most Expensive Items by Valuation
   const topExpensiveItems = useMemo(
     () =>
       [...inventoryItems]
@@ -149,13 +155,21 @@ export default function FinancePage() {
     [inventoryItems]
   );
 
+  // Overall P&L Totals
   const plTotals = useMemo(() => {
+    if (financialSummaries.length === 0) {
+      const revenue = inventoryItems.reduce((s, i) => s + i.sellPrice * i.quantity, 0);
+      const costs = inventoryItems.reduce((s, i) => s + i.unitCost * i.quantity, 0);
+      const profit = Math.max(0, revenue - costs);
+      const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
+      return { revenue, costs, profit, margin };
+    }
     const revenue = financialSummaries.reduce((s, m) => s + m.revenue, 0);
     const costs = financialSummaries.reduce((s, m) => s + m.costs, 0);
     const profit = revenue - costs;
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
     return { revenue, costs, profit, margin };
-  }, []);
+  }, [financialSummaries, inventoryItems]);
 
   const revenueByCategory = useMemo(() => {
     const map: Record<string, number> = {};
@@ -177,50 +191,63 @@ export default function FinancePage() {
     [inventoryItems]
   );
 
-  const adjustedForecast = useMemo(() => {
-    const multiplier = 1 + growthRate / 100;
-    return forecastData.map((d) => {
-      if (!("forecast" in d) || !d.forecast) return d;
-      const revenue = Math.round(d.revenue * multiplier);
-      const costs = Math.round(d.costs * (1 + growthRate / 200));
-      return { ...d, revenue, costs, profit: revenue - costs };
-    });
-  }, [growthRate]);
-
+  // Dynamic forecast based on user growth rate slider
   const forecastChartData = useMemo(() => {
-    const lastHistIdx = adjustedForecast.findIndex(
-      (d) => "forecast" in d && d.forecast
-    );
-    return adjustedForecast.map((d, i) => {
-      const isForecast = "forecast" in d && d.forecast;
-      const isBridge = i === lastHistIdx - 1;
-      return {
-        month: d.month,
-        historicalRevenue: !isForecast ? d.revenue : undefined,
-        historicalCosts: !isForecast ? d.costs : undefined,
-        forecastRevenue: isForecast || isBridge ? d.revenue : undefined,
-        forecastCosts: isForecast || isBridge ? d.costs : undefined,
-      };
-    });
-  }, [adjustedForecast]);
+    if (financialSummaries.length === 0) return [];
+    const multiplier = 1 + growthRate / 100;
+    const baseRev = plTotals.revenue || 50000;
+    const baseCosts = plTotals.costs || 30000;
+
+    return [
+      ...financialSummaries.map((m) => ({
+        month: m.month,
+        historicalRevenue: m.revenue,
+        historicalCosts: m.costs,
+        forecastRevenue: undefined,
+        forecastCosts: undefined,
+      })),
+      {
+        month: "Next Month (+1m)",
+        historicalRevenue: undefined,
+        historicalCosts: undefined,
+        forecastRevenue: Math.round(baseRev * multiplier),
+        forecastCosts: Math.round(baseCosts * (1 + growthRate / 200)),
+      },
+      {
+        month: "Month (+2m)",
+        historicalRevenue: undefined,
+        historicalCosts: undefined,
+        forecastRevenue: Math.round(baseRev * Math.pow(multiplier, 1.2)),
+        forecastCosts: Math.round(baseCosts * Math.pow(1 + growthRate / 200, 1.2)),
+      },
+    ];
+  }, [financialSummaries, plTotals, growthRate]);
 
   const cashFlowProjections = useMemo(() => {
-    return adjustedForecast
-      .filter((d) => "forecast" in d && d.forecast)
-      .map((d) => ({
-        month: d.month,
-        revenue: d.revenue,
-        costs: d.costs,
-        netCashFlow: d.profit,
-      }));
-  }, [adjustedForecast]);
+    const baseRev = plTotals.revenue || 50000;
+    const baseCosts = plTotals.costs || 30000;
+    const multiplier = 1 + growthRate / 100;
+
+    return [1, 2, 3].map((m) => {
+      const rev = Math.round(baseRev * Math.pow(multiplier, m * 0.5));
+      const costs = Math.round(baseCosts * Math.pow(1 + growthRate / 200, m * 0.5));
+      return {
+        month: `Month +${m}`,
+        revenue: rev,
+        costs: costs,
+        netCashFlow: rev - costs,
+      };
+    });
+  }, [plTotals, growthRate]);
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-xl font-medium tracking-tight sm:text-2xl">Financial Planner</h1>
+        <h1 className="text-xl font-bold tracking-tight sm:text-2xl text-foreground">
+          Financial Planner &amp; Analytics
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track costs, analyze profit &amp; loss, and forecast future performance
+          Real-time cost tracking, P&amp;L analysis, and AI financial forecasting based on your inventory database.
         </p>
       </div>
 
@@ -230,7 +257,7 @@ export default function FinancePage() {
             value="recommendations"
             className="gap-1 sm:gap-2 text-xs sm:text-sm"
           >
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />
             <span className="hidden sm:inline">AI</span> Recs
           </TabsTrigger>
           <TabsTrigger value="costs" className="gap-1 sm:gap-2 text-xs sm:text-sm">
@@ -249,15 +276,15 @@ export default function FinancePage() {
 
         {/* ── Tab 1: AI Recommendations ── */}
         <TabsContent value="recommendations" className="space-y-6">
-          <Card>
+          <Card className="border border-border/60 shadow-none">
             <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  AI-Style Stock Recommendations
+                  <Sparkles className="h-5 w-5 text-emerald-600" />
+                  AI Stock Optimization Recommendations
                 </CardTitle>
                 <CardDescription>
-                  Suggested stock levels based on recent demand, seasonality, and horizon.
+                  Suggested stock levels based on your inventory history and planning horizon.
                 </CardDescription>
               </div>
               <div className="space-y-2">
@@ -268,9 +295,9 @@ export default function FinancePage() {
                       key={h}
                       type="button"
                       onClick={() => setRecommendationHorizon(h as 30 | 60 | 90)}
-                      className={`px-2 py-1 rounded-sm ${
+                      className={`px-3 py-1 rounded-sm font-medium transition-colors ${
                         recommendationHorizon === h
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-emerald-600 text-white"
                           : "text-muted-foreground hover:bg-muted"
                       }`}
                     >
@@ -282,15 +309,17 @@ export default function FinancePage() {
             </CardHeader>
             <CardContent>
               {recLoading && (
-                <p className="text-sm text-muted-foreground">Loading recommendations…</p>
+                <p className="text-sm text-muted-foreground py-6 text-center">Loading AI recommendations...</p>
               )}
               {recError && (
-                <p className="text-sm text-destructive">{recError}</p>
+                <p className="text-sm text-destructive py-6 text-center">{recError}</p>
               )}
               {!recLoading && !recError && recommendations.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No recommendations are available yet. Try again in a moment.
-                </p>
+                <div className="text-center py-8 space-y-2">
+                  <Package className="h-8 w-8 text-muted-foreground mx-auto" />
+                  <p className="text-sm font-medium text-foreground">No Stock Recommendations Yet</p>
+                  <p className="text-xs text-muted-foreground">Add products to your inventory to generate automated stock recommendations.</p>
+                </div>
               )}
               {!recLoading && !recError && recommendations.length > 0 && (
                 <div className="overflow-x-auto">
@@ -299,46 +328,37 @@ export default function FinancePage() {
                       <tr className="border-b text-muted-foreground">
                         <th className="text-left py-3 pr-4 font-medium">Item</th>
                         <th className="text-left py-3 pr-4 font-medium">Horizon</th>
-                        <th className="text-right py-3 pr-4 font-medium">Current</th>
+                        <th className="text-right py-3 pr-4 font-medium">Current Stock</th>
                         <th className="text-right py-3 pr-4 font-medium">Recommended</th>
                         <th className="text-right py-3 pr-4 font-medium">% Change</th>
                         <th className="text-left py-3 pr-4 font-medium">Confidence</th>
-                        <th className="text-left py-3 font-medium">Why</th>
+                        <th className="text-left py-3 font-medium">Rationale</th>
                       </tr>
                     </thead>
                     <tbody>
                       {recommendations.map((rec) => (
                         <tr key={rec.id} className="border-b last:border-0 align-top">
-                          <td className="py-3 pr-4 font-medium">{rec.itemName}</td>
+                          <td className="py-3 pr-4 font-medium text-foreground">{rec.itemName}</td>
                           <td className="py-3 pr-4 text-xs text-muted-foreground">
                             {rec.timeHorizon}
                           </td>
                           <td className="py-3 pr-4 text-right tabular-nums">
                             {rec.currentStock}
                           </td>
-                          <td className="py-3 pr-4 text-right tabular-nums">
+                          <td className="py-3 pr-4 text-right tabular-nums font-semibold">
                             {rec.recommendedStock}
                           </td>
                           <td
-                            className={`py-3 pr-4 text-right tabular-nums ${
-                              rec.changePercent >= 0 ? "text-primary" : "text-destructive"
+                            className={`py-3 pr-4 text-right tabular-nums font-medium ${
+                              rec.changePercent >= 0 ? "text-emerald-600" : "text-destructive"
                             }`}
                           >
                             {rec.changePercent > 0 ? "+" : ""}
                             {rec.changePercent}%
                           </td>
                           <td className="py-3 pr-4">
-                            <Badge
-                              variant={
-                                rec.confidence === "high"
-                                  ? "success"
-                                  : rec.confidence === "medium"
-                                    ? "warning"
-                                    : "outline"
-                              }
-                            >
-                              {rec.confidence.charAt(0).toUpperCase() +
-                                rec.confidence.slice(1)}
+                            <Badge variant="outline" className="text-xs">
+                              {rec.confidence}
                             </Badge>
                           </td>
                           <td className="py-3 text-xs text-muted-foreground max-w-md">
@@ -357,165 +377,117 @@ export default function FinancePage() {
         {/* ── Tab 2: Cost Tracking ── */}
         <TabsContent value="costs" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
+            <Card className="border border-border/60 shadow-none">
               <CardHeader>
-                <CardTitle className="text-lg">Monthly Spending</CardTitle>
+                <CardTitle className="text-lg">Monthly Cost Movements</CardTitle>
                 <CardDescription>
-                  Total costs over the last {financialSummaries.length} months
+                  Real cost values based on inventory transactions
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={financialSummaries}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
-                    <XAxis dataKey="month" tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }} />
-                    <YAxis
-                      tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
-                      tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(value: number) => [formatCurrency(value), "Costs"]}
-                    />
-                    <Bar dataKey="costs" fill={CHART_COLORS[0]} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {financialSummaries.length === 0 ? (
+                  <p className="text-sm text-center py-12 text-muted-foreground">
+                    No transaction costs recorded yet. Add inventory items to visualize cost trends.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={financialSummaries}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
+                      <XAxis dataKey="month" tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }} />
+                      <YAxis
+                        tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
+                        tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                      />
+                      <Tooltip
+                        {...tooltipStyle}
+                        formatter={(value: number) => [formatCurrency(value), "Costs"]}
+                      />
+                      <Bar dataKey="costs" fill={CHART_COLORS[1]} radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border border-border/60 shadow-none">
               <CardHeader>
-                <CardTitle className="text-lg">Spending by Category</CardTitle>
-                <CardDescription>Breakdown of costs across categories</CardDescription>
+                <CardTitle className="text-lg">Inventory Valuation by Category</CardTitle>
+                <CardDescription>Cost distribution across your product categories</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={categorySpending} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
-                    <XAxis
-                      type="number"
-                      tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
-                      tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                    />
-                    <YAxis
-                      dataKey="category"
-                      type="category"
-                      width={120}
-                      tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
-                    />
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(value: number) => [formatCurrency(value), "Spent"]}
-                    />
-                    <Bar dataKey="amount" fill={CHART_COLORS[1]} radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {categorySpending.length === 0 ? (
+                  <p className="text-sm text-center py-12 text-muted-foreground">
+                    No categories found. Create inventory items to track category valuation.
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={categorySpending} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
+                      <XAxis
+                        type="number"
+                        tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
+                        tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+                      />
+                      <YAxis
+                        dataKey="category"
+                        type="category"
+                        width={120}
+                        tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
+                      />
+                      <Tooltip
+                        {...tooltipStyle}
+                        formatter={(value: number) => [formatCurrency(value), "Valuation"]}
+                      />
+                      <Bar dataKey="amount" fill={CHART_COLORS[0]} radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          <Card>
+          {/* Top 5 Most Expensive Items */}
+          <Card className="border border-border/60 shadow-none">
             <CardHeader>
-              <CardTitle className="text-lg">Budget vs Actual</CardTitle>
+              <CardTitle className="text-lg">Top 5 Highest Value Inventory Products</CardTitle>
               <CardDescription>
-                Spending against budget by category
+                Ranked by total capital tied up (Unit Cost &times; Quantity)
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                {categorySpending.map((cat, i) => {
-                  const pct = Math.round((cat.amount / cat.budget) * 100);
-                  const over = cat.amount > cat.budget;
-                  return (
-                    <div
-                      key={cat.category}
-                      className="rounded-lg border p-4 space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm">{cat.category}</span>
-                        <Badge variant={over ? "destructive" : "success"}>
-                          {over ? "Over" : "Under"} budget
-                        </Badge>
-                      </div>
-                      <div className="flex items-baseline justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {formatCurrency(cat.amount)}{" "}
-                          <span className="text-xs">
-                            / {formatCurrency(cat.budget)}
-                          </span>
-                        </span>
-                        <span
-                          className={
-                            over ? "text-destructive font-semibold" : "text-primary font-semibold"
-                          }
-                        >
-                          {pct}%
-                        </span>
-                      </div>
-                      <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${
-                            over ? "bg-destructive" : "bg-primary"
-                          }`}
-                          style={{ width: `${Math.min(pct, 100)}%` }}
-                        />
-                      </div>
-                      {over && (
-                        <p className="text-xs text-destructive">
-                          {formatCurrency(cat.amount - cat.budget)} over budget
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Cost Entries</CardTitle>
-              <CardDescription>
-                Detailed list of recent costs across categories
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {costsLoading && (
-                <p className="text-sm text-muted-foreground">Loading cost entries…</p>
-              )}
-              {costsError && (
-                <p className="text-sm text-destructive">{costsError}</p>
-              )}
-              {!costsLoading && !costsError && costEntries.length === 0 && (
-                <p className="text-sm text-muted-foreground">
-                  No cost entries are available yet.
+              {topExpensiveItems.length === 0 ? (
+                <p className="text-sm text-center py-6 text-muted-foreground">
+                  No products in database yet.
                 </p>
-              )}
-              {!costsLoading && !costsError && costEntries.length > 0 && (
+              ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b text-muted-foreground">
-                        <th className="text-left py-3 pr-4 font-medium">Date</th>
+                        <th className="text-left py-3 pr-4 font-medium">#</th>
+                        <th className="text-left py-3 pr-4 font-medium">Product Name</th>
                         <th className="text-left py-3 pr-4 font-medium">Category</th>
-                        <th className="text-left py-3 pr-4 font-medium">Description</th>
-                        <th className="text-right py-3 font-medium">Amount</th>
+                        <th className="text-right py-3 pr-4 font-medium">Unit Cost</th>
+                        <th className="text-right py-3 pr-4 font-medium">Qty</th>
+                        <th className="text-right py-3 font-medium">Total Capital Value</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {costEntries.map((c) => (
-                        <tr key={c.id} className="border-b last:border-0">
-                          <td className="py-3 pr-4 text-xs text-muted-foreground">
-                            {formatDate(c.date)}
-                          </td>
+                      {topExpensiveItems.map((item, idx) => (
+                        <tr key={item.id} className="border-b last:border-0">
+                          <td className="py-3 pr-4 text-muted-foreground">{idx + 1}</td>
+                          <td className="py-3 pr-4 font-medium text-foreground">{item.name}</td>
                           <td className="py-3 pr-4">
-                            <Badge variant="outline">{c.category}</Badge>
+                            <Badge variant="secondary">{item.category}</Badge>
                           </td>
-                          <td className="py-3 pr-4 max-w-md">
-                            {c.description ?? "-"}
+                          <td className="py-3 pr-4 text-right tabular-nums">
+                            {formatCurrency(item.unitCost)}
                           </td>
-                          <td className="py-3 text-right tabular-nums font-medium">
-                            {formatCurrency(c.amount)}
+                          <td className="py-3 pr-4 text-right tabular-nums font-semibold">
+                            {item.quantity}
+                          </td>
+                          <td className="py-3 text-right font-bold tabular-nums text-emerald-600">
+                            {formatCurrency(item.unitCost * item.quantity)}
                           </td>
                         </tr>
                       ))}
@@ -525,515 +497,118 @@ export default function FinancePage() {
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Top 5 Most Expensive Items</CardTitle>
-              <CardDescription>
-                Ranked by total inventory value (unit cost &times; quantity)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-muted-foreground">
-                      <th className="text-left py-3 pr-4 font-medium">#</th>
-                      <th className="text-left py-3 pr-4 font-medium">Item</th>
-                      <th className="text-left py-3 pr-4 font-medium">Category</th>
-                      <th className="text-right py-3 pr-4 font-medium">Unit Cost</th>
-                      <th className="text-right py-3 pr-4 font-medium">Qty</th>
-                      <th className="text-right py-3 font-medium">Total Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topExpensiveItems.map((item, idx) => (
-                      <tr key={item.id} className="border-b last:border-0">
-                        <td className="py-3 pr-4 text-muted-foreground">
-                          {idx + 1}
-                        </td>
-                        <td className="py-3 pr-4 font-medium">{item.name}</td>
-                        <td className="py-3 pr-4">
-                          <Badge variant="secondary">{item.category}</Badge>
-                        </td>
-                        <td className="py-3 pr-4 text-right tabular-nums">
-                          {formatCurrency(item.unitCost)}
-                        </td>
-                        <td className="py-3 pr-4 text-right tabular-nums">
-                          {item.quantity}
-                        </td>
-                        <td className="py-3 text-right font-semibold tabular-nums">
-                          {formatCurrency(item.unitCost * item.quantity)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* ── Tab 3: Profit & Loss ── */}
         <TabsContent value="pnl" className="space-y-6">
           <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-            <Card>
+            <Card className="border border-border/60 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">
-                  Gross Revenue
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Estimated Revenue</CardTitle>
+                <DollarSign className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-foreground">
                   {formatCurrency(plTotals.revenue)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Over {financialSummaries.length} months
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Total Stock Selling Value</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-border/60 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">COGS</CardTitle>
-                <TrendingDown className="h-4 w-4 text-destructive" />
+                <CardTitle className="text-sm font-medium">Total Capital COGS</CardTitle>
+                <TrendingDown className="h-4 w-4 text-rose-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-foreground">
                   {formatCurrency(plTotals.costs)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Cost of goods sold
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Cost of Goods Invested</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-border/60 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">
-                  Gross Profit
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-medium">Potential Gross Profit</CardTitle>
+                <TrendingUp className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">
+                <div className="text-2xl font-bold text-emerald-600">
                   {formatCurrency(plTotals.profit)}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Revenue minus COGS
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Estimated Net Gain</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border border-border/60 shadow-none">
               <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                <CardTitle className="text-sm font-medium">Margin %</CardTitle>
-                <ArrowUpRight className="h-4 w-4 text-primary" />
+                <CardTitle className="text-sm font-medium">Gross Margin %</CardTitle>
+                <ArrowUpRight className="h-4 w-4 text-emerald-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-foreground">
                   {plTotals.margin.toFixed(1)}%
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Gross profit margin
-                </p>
+                <p className="text-xs text-muted-foreground mt-1">Overall Product Margin</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle className="text-lg">Monthly P&amp;L Trend</CardTitle>
-                <CardDescription>
-                  Revenue, cost, and profit trends over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={320}>
-                  <LineChart data={financialSummaries}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
-                    <XAxis dataKey="month" tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }} />
-                    <YAxis
-                      tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
-                      tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(value: number, name: string) => [
-                        formatCurrency(value),
-                        name.charAt(0).toUpperCase() + name.slice(1),
-                      ]}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="revenue"
-                      stroke={CHART_COLORS[0]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="costs"
-                      stroke={CHART_COLORS[4]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="profit"
-                      stroke={CHART_COLORS[1]}
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Revenue by Category</CardTitle>
-                <CardDescription>
-                  Distribution of potential revenue
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex items-center justify-center">
-                <ResponsiveContainer width="100%" height={280}>
-                  <PieChart>
-                    <Pie
-                      data={revenueByCategory}
-                      dataKey="value"
-                      nameKey="category"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      innerRadius={50}
-                      paddingAngle={3}
-                      label={({ category, percent }) =>
-                        `${category} ${(percent * 100).toFixed(0)}%`
-                      }
-                      labelLine={false}
-                    >
-                      {revenueByCategory.map((_, i) => (
-                        <Cell
-                          key={i}
-                          fill={CHART_COLORS[i % CHART_COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      {...tooltipStyle}
-                      formatter={(value: number) => [formatCurrency(value), "Revenue"]}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
+          <Card className="border border-border/60 shadow-none">
             <CardHeader>
-              <CardTitle className="text-lg">Detailed P&amp;L by Month</CardTitle>
-              <CardDescription>
-                Monthly breakdown of revenue, costs, profit, and margin
-              </CardDescription>
+              <CardTitle className="text-lg">Revenue vs Cost Breakdown by Category</CardTitle>
+              <CardDescription>Estimated revenue potential grouped by product category</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-muted-foreground">
-                      <th className="text-left py-3 pr-4 font-medium">Month</th>
-                      <th className="text-right py-3 pr-4 font-medium">Revenue</th>
-                      <th className="text-right py-3 pr-4 font-medium">Costs</th>
-                      <th className="text-right py-3 pr-4 font-medium">Profit</th>
-                      <th className="text-right py-3 font-medium">Margin %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {financialSummaries.map((m) => {
-                      const margin =
-                        m.revenue > 0
-                          ? ((m.profit / m.revenue) * 100).toFixed(1)
-                          : "0.0";
-                      return (
-                        <tr key={m.month} className="border-b last:border-0">
-                          <td className="py-3 pr-4 font-medium">{m.month}</td>
-                          <td className="py-3 pr-4 text-right tabular-nums">
-                            {formatCurrency(m.revenue)}
-                          </td>
-                          <td className="py-3 pr-4 text-right tabular-nums text-destructive">
-                            {formatCurrency(m.costs)}
-                          </td>
-                          <td className="py-3 pr-4 text-right tabular-nums text-primary">
-                            {formatCurrency(m.profit)}
-                          </td>
-                          <td className="py-3 text-right tabular-nums">
-                            {margin}%
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 font-semibold">
-                      <td className="py-3 pr-4">Total</td>
-                      <td className="py-3 pr-4 text-right tabular-nums">
-                        {formatCurrency(plTotals.revenue)}
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums text-destructive">
-                        {formatCurrency(plTotals.costs)}
-                      </td>
-                      <td className="py-3 pr-4 text-right tabular-nums text-primary">
-                        {formatCurrency(plTotals.profit)}
-                      </td>
-                      <td className="py-3 text-right tabular-nums">
-                        {plTotals.margin.toFixed(1)}%
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+              {revenueByCategory.length === 0 ? (
+                <p className="text-sm text-center py-8 text-muted-foreground">
+                  Add inventory products to view category revenue breakdown.
+                </p>
+              ) : (
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={revenueByCategory}
+                        dataKey="value"
+                        nameKey="category"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        innerRadius={50}
+                        paddingAngle={3}
+                      >
+                        {revenueByCategory.map((_, i) => (
+                          <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        {...tooltipStyle}
+                        formatter={(value: number) => [formatCurrency(value), "Est. Revenue"]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* ── Tab 4: Forecasting ── */}
         <TabsContent value="forecast" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">
-                Projected Costs — Historical vs Forecast
-              </CardTitle>
-              <CardDescription>
-                Solid lines show actuals, dashed lines show projected values
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ResponsiveContainer width="100%" height={340}>
-                <LineChart data={forecastChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,90%)" />
-                  <XAxis dataKey="month" tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }} />
-                  <YAxis
-                    tick={{ fill: "hsl(0,0%,60%)", fontSize: 12 }}
-                    tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                  />
-                  <Tooltip
-                    {...tooltipStyle}
-                    formatter={(value: number, name: string) => [
-                      formatCurrency(value),
-                      name === "historicalCosts"
-                        ? "Actual Costs"
-                        : name === "forecastCosts"
-                          ? "Forecast Costs"
-                          : name === "historicalRevenue"
-                            ? "Actual Revenue"
-                            : "Forecast Revenue",
-                    ]}
-                  />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="historicalRevenue"
-                    stroke={CHART_COLORS[0]}
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    name="Actual Revenue"
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="forecastRevenue"
-                    stroke={CHART_COLORS[0]}
-                    strokeWidth={2}
-                    strokeDasharray="8 4"
-                    dot={{ r: 4 }}
-                    name="Forecast Revenue"
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="historicalCosts"
-                    stroke={CHART_COLORS[4]}
-                    strokeWidth={2}
-                    dot={{ r: 4 }}
-                    name="Actual Costs"
-                    connectNulls={false}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="forecastCosts"
-                    stroke={CHART_COLORS[4]}
-                    strokeWidth={2}
-                    strokeDasharray="8 4"
-                    dot={{ r: 4 }}
-                    name="Forecast Costs"
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-6 lg:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PiggyBank className="h-5 w-5 text-primary" />
-                  Reorder Cost Forecast
-                </CardTitle>
-                <CardDescription>
-                  Items near reorder point (within 150% of threshold)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {reorderAlerts.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      No items are currently near their reorder point.
-                    </p>
-                  ) : (
-                    reorderAlerts.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between rounded-lg border p-3"
-                      >
-                        <div className="space-y-1">
-                          <p className="font-medium text-sm">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            Qty: {item.quantity} / Reorder at: {item.reorderPoint}
-                          </p>
-                        </div>
-                        <div className="text-right space-y-1">
-                          <p className="font-semibold text-sm">
-                            {formatCurrency(item.estimatedReorderCost)}
-                          </p>
-                          <Badge
-                            variant={
-                              item.quantity <= item.reorderPoint
-                                ? "destructive"
-                                : "warning"
-                            }
-                          >
-                            {item.quantity <= item.reorderPoint
-                              ? "Below threshold"
-                              : "Near threshold"}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                  <Separator />
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-sm font-medium text-muted-foreground">
-                      Total Estimated Reorder Cost
-                    </span>
-                    <span className="text-lg font-bold text-primary">
-                      {formatCurrency(
-                        reorderAlerts.reduce(
-                          (s, i) => s + i.estimatedReorderCost,
-                          0
-                        )
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Cash Flow Projection
-                </CardTitle>
-                <CardDescription>
-                  Next 3 months projected cash flow
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {cashFlowProjections.map((m, i) => (
-                    <div key={m.month} className="rounded-lg border p-4 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold">{m.month}</span>
-                        <Badge variant="secondary">Month {i + 1}</Badge>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground text-xs">Revenue</p>
-                          <p className="font-medium tabular-nums">
-                            {formatCurrency(m.revenue)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Costs</p>
-                          <p className="font-medium tabular-nums text-destructive">
-                            {formatCurrency(m.costs)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">
-                            Net Cash Flow
-                          </p>
-                          <p className="font-medium tabular-nums text-primary">
-                            {formatCurrency(m.netCashFlow)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <Separator />
-                  <div className="grid grid-cols-3 gap-2 text-sm pt-1">
-                    <div>
-                      <p className="text-muted-foreground text-xs">Total Revenue</p>
-                      <p className="font-bold tabular-nums">
-                        {formatCurrency(
-                          cashFlowProjections.reduce((s, m) => s + m.revenue, 0)
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs">Total Costs</p>
-                      <p className="font-bold tabular-nums text-destructive">
-                        {formatCurrency(
-                          cashFlowProjections.reduce((s, m) => s + m.costs, 0)
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground text-xs">Net Total</p>
-                      <p className="font-bold tabular-nums text-primary">
-                        {formatCurrency(
-                          cashFlowProjections.reduce(
-                            (s, m) => s + m.netCashFlow,
-                            0
-                          )
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Card>
+          <Card className="border border-border/60 shadow-none">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                What-If Scenario
+                <Calculator className="h-5 w-5 text-emerald-600" />
+                Growth Rate What-If Simulator
               </CardTitle>
               <CardDescription>
-                Adjust the growth rate to see how it impacts projected revenue,
-                costs, and profit for forecasted months
+                Adjust predicted business growth rate to model future monthly revenue and profit targets.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-3">
+              <div className="space-y-3 max-w-md">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Growth Rate</span>
-                  <Badge variant="outline" className="text-base tabular-nums px-3">
+                  <span className="text-sm font-medium">Expected Growth Modifier</span>
+                  <Badge variant="outline" className="text-base font-bold px-3">
                     {growthRate}%
                   </Badge>
                 </div>
@@ -1041,56 +616,45 @@ export default function FinancePage() {
                   value={[growthRate]}
                   onValueChange={(v) => setGrowthRate(v[0])}
                   min={0}
-                  max={30}
+                  max={50}
                   step={1}
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>0%</span>
-                  <span>15%</span>
-                  <span>30%</span>
+                  <span>25%</span>
+                  <span>50%</span>
                 </div>
               </div>
 
               <Separator />
 
               <div className="grid gap-4 sm:grid-cols-3">
-                {adjustedForecast
-                  .filter((d) => "forecast" in d && d.forecast)
-                  .map((d) => (
-                    <div key={d.month} className="rounded-lg border p-4 space-y-3">
-                      <p className="font-semibold text-sm">{d.month}</p>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Revenue</span>
-                          <span className="font-medium tabular-nums">
-                            {formatCurrency(d.revenue)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Costs</span>
-                          <span className="font-medium tabular-nums text-destructive">
-                            {formatCurrency(d.costs)}
-                          </span>
-                        </div>
-                        <Separator />
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Profit</span>
-                          <span className="font-bold tabular-nums text-primary">
-                            {formatCurrency(d.profit)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Margin</span>
-                          <span className="font-medium tabular-nums">
-                            {d.revenue > 0
-                              ? ((d.profit / d.revenue) * 100).toFixed(1)
-                              : "0.0"}
-                            %
-                          </span>
-                        </div>
+                {cashFlowProjections.map((d) => (
+                  <div key={d.month} className="rounded-lg border p-4 space-y-3 bg-card">
+                    <p className="font-semibold text-sm text-foreground">{d.month}</p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Projected Revenue</span>
+                        <span className="font-medium tabular-nums text-foreground">
+                          {formatCurrency(d.revenue)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Projected Costs</span>
+                        <span className="font-medium tabular-nums text-rose-500">
+                          {formatCurrency(d.costs)}
+                        </span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground font-medium">Net Profit</span>
+                        <span className="font-bold tabular-nums text-emerald-600">
+                          {formatCurrency(d.netCashFlow)}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
