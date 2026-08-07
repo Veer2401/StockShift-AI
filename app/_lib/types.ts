@@ -86,3 +86,39 @@ export interface ReportConfig {
   description: string;
   type: "valuation" | "movement" | "financial";
 }
+
+export interface Vendor {
+  id: string;
+  name: string;
+  contactPerson?: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  leadTimeDays: number;
+  minOrderQty: number;
+  paymentTerms?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface PurchaseOrderItem {
+  itemId: string;
+  itemName: string;
+  sku: string;
+  quantity: number;
+  unitCost: number;
+  total: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  vendorId?: string;
+  vendorName: string;
+  status: "draft" | "sent" | "received" | "cancelled";
+  totalAmount: number;
+  items: PurchaseOrderItem[];
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+}

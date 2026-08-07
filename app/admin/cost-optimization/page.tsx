@@ -8,6 +8,7 @@ import { Badge } from "@/_components/ui/badge";
 import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Sparkles, Plus, Package } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/_lib/utils";
+import { LiquidationRadar } from "./components/LiquidationRadar";
 
 export default function CostOptimizationPage() {
   const { items: inventoryItems, isLoading } = useInventory();
@@ -205,6 +206,9 @@ export default function CostOptimizationPage() {
         </Card>
       </div>
 
+      {/* Capital Liquidation & Shrinkage Radar */}
+      <LiquidationRadar />
+
       {/* Holding Cost */}
       <Card className="border-border/60 shadow-none">
         <CardHeader>
@@ -248,7 +252,7 @@ export default function CostOptimizationPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between gap-2">
                       <Badge
                         variant="secondary"
                         className={
@@ -261,8 +265,13 @@ export default function CostOptimizationPage() {
                       >
                         {rec.priority.toUpperCase()} PRIORITY
                       </Badge>
+                      <Link href="/admin/purchase-orders">
+                        <Button size="sm" className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+                          ⚡ Auto-Draft Purchase Order
+                        </Button>
+                      </Link>
                     </div>
-                    <p className="font-medium text-sm text-foreground">{rec.action}</p>
+                    <p className="font-medium text-sm text-foreground pt-1">{rec.action}</p>
                     <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">💰 Impact: {rec.impact}</p>
                   </div>
                 </div>

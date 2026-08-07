@@ -23,12 +23,26 @@ from flask_cors import CORS
 from openai import OpenAI
 from dotenv import load_dotenv
 
+from supabase import create_client, Client
+
 load_dotenv()
 
 # ── App setup ────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
 CORS(app)
+
+# ── Supabase Client Init ──────────────────────────────────────────────────────
+
+SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL", "https://ebmnsrhwglctgwzfrljw.supabase.co")
+SUPABASE_KEY = os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "")
+
+supabase: Client | None = None
+if SUPABASE_URL and SUPABASE_KEY:
+    try:
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+    except Exception as _err:
+        print(f"⚠️  Supabase client init failed: {_err}")
 
 # ── OpenRouter setup with Load Balancing & Failover ──────────────────────────
 
@@ -104,7 +118,28 @@ def _extract_json(raw: str) -> dict | None:
 
 
 def get_all_sku_stats() -> list[dict]:
-    """Fetch metadata + stats for every SKU."""
+    """Fetch metadata + stats for every SKU from Supabase Postgres DB."""
+    if supabase:
+        try:
+            res = supabase.table("inventory_items").select("*").execute()
+            if res.data and len(res.data) > 0:
+                results = []
+                for item in res.data:
+                    results.append({
+                        "sku": item.get("sku", ""),
+                        "item_name": item.get("name", ""),
+                        "category": item.get("category", ""),
+                        "current_stock": int(item.get("quantity") or 0),
+                        "unit_cost": float(item.get("unit_cost") or 0),
+                        "sell_price": float(item.get("sell_price") or 0),
+                        "reorder_point": int(item.get("reorder_point") or 0),
+                        "location": item.get("location") or "Main Warehouse",
+                        "avg_daily_demand_30d": max(1, int((item.get("reorder_point") or 10) / 15)),
+                    })
+                return results
+        except Exception as _err:
+            print(f"⚠️ Supabase fetch error: {_err}")
+
     return _get_fallback_stats()
 
 

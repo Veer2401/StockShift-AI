@@ -14,7 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/_components/ui/card";
-import { User, Bell, Shield, Palette } from "lucide-react";
+import { User, Bell, Shield, Palette, Building2, ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 function getInitials(name: string): string {
   return name
@@ -26,9 +27,33 @@ function getInitials(name: string): string {
 }
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
+  const [companyName, setCompanyName] = useState(user?.companyName ?? "");
+  const [city, setCity] = useState(user?.city ?? "");
+  const [state, setState] = useState(user?.state ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      await updateProfile({
+        name,
+        companyName,
+        city,
+        state,
+      });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
@@ -37,7 +62,7 @@ export default function SettingsPage() {
           Settings
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Manage your account and application preferences.
+          Manage your account, organization details, and application preferences.
         </p>
       </div>
 
@@ -49,8 +74,8 @@ export default function SettingsPage() {
               <User className="h-[18px] w-[18px]" />
             </div>
             <div>
-              <CardTitle className="text-base">Profile</CardTitle>
-              <CardDescription>Your personal information</CardDescription>
+              <CardTitle className="text-base">Profile &amp; Organization</CardTitle>
+              <CardDescription>Update your personal information and company name</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -67,7 +92,7 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground capitalize">
-                {user?.role} account
+                {user?.companyName || "Personal Workspace"} • {user?.role} account
               </p>
             </div>
           </div>
@@ -76,7 +101,7 @@ export default function SettingsPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="name">Full name</Label>
+              <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
                 value={name}
@@ -85,19 +110,43 @@ export default function SettingsPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="companyName">Company Name *</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                id="companyName"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="e.g. Acme Corp / StockShift Business"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input
+                id="city"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g. Mumbai / Bangalore"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input
+                id="state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                placeholder="e.g. Maharashtra"
               />
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button size="sm">Save changes</Button>
+          <div className="flex items-center justify-between pt-2">
+            {saveSuccess ? (
+              <p className="text-xs text-emerald-600 font-semibold">
+                ✓ Profile &amp; Company Name updated successfully!
+              </p>
+            ) : <span />}
+            <Button onClick={handleSaveProfile} disabled={isSaving} size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+              {isSaving ? "Saving..." : "Save Company & Profile"}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -185,6 +234,30 @@ export default function SettingsPage() {
             </Button>
           </div>
         </CardContent>
+      </Card>
+
+      {/* Organization Workspace & Team Management */}
+      <Card className="border-border">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
+                <Building2 className="h-[18px] w-[18px]" />
+              </div>
+              <div>
+                <CardTitle className="text-base">Organization &amp; Team Members</CardTitle>
+                <CardDescription>
+                  Manage multi-tenant workspace, invite team members, and set RBAC roles
+                </CardDescription>
+              </div>
+            </div>
+            <Link href="/admin/settings/organization">
+              <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+                Manage Team <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
       </Card>
 
       {/* Security */}

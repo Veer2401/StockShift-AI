@@ -151,5 +151,60 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 5. Force PostgREST schema cache reload
+-- 5. Create Vendors Table
+CREATE TABLE IF NOT EXISTS public.vendors (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  contact_person TEXT,
+  email TEXT NOT NULL,
+  phone TEXT,
+  address TEXT,
+  lead_time_days INTEGER DEFAULT 7,
+  min_order_qty INTEGER DEFAULT 10,
+  payment_terms TEXT DEFAULT 'Net 30',
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.vendors ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own vendors" ON public.vendors;
+DROP POLICY IF EXISTS "Users can insert their own vendors" ON public.vendors;
+DROP POLICY IF EXISTS "Users can update their own vendors" ON public.vendors;
+DROP POLICY IF EXISTS "Users can delete their own vendors" ON public.vendors;
+
+CREATE POLICY "Users can view their own vendors" ON public.vendors FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own vendors" ON public.vendors FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own vendors" ON public.vendors FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own vendors" ON public.vendors FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- 6. Create Purchase Orders Table
+CREATE TABLE IF NOT EXISTS public.purchase_orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  po_number TEXT NOT NULL,
+  vendor_id UUID REFERENCES public.vendors(id) ON DELETE SET NULL,
+  vendor_name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'received', 'cancelled')),
+  total_amount NUMERIC NOT NULL DEFAULT 0,
+  items JSONB NOT NULL DEFAULT '[]'::jsonb,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.purchase_orders ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own purchase orders" ON public.purchase_orders;
+DROP POLICY IF EXISTS "Users can insert their own purchase orders" ON public.purchase_orders;
+DROP POLICY IF EXISTS "Users can update their own purchase orders" ON public.purchase_orders;
+DROP POLICY IF EXISTS "Users can delete their own purchase orders" ON public.purchase_orders;
+
+CREATE POLICY "Users can view their own purchase orders" ON public.purchase_orders FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own purchase orders" ON public.purchase_orders FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own purchase orders" ON public.purchase_orders FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete their own purchase orders" ON public.purchase_orders FOR DELETE TO authenticated USING (auth.uid() = user_id);
+
+-- 7. Force PostgREST schema cache reload
 NOTIFY pgrst, 'reload schema';

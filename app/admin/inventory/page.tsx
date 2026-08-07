@@ -45,8 +45,10 @@ import {
   Sparkles,
   RefreshCw,
   Loader2,
+  FileSpreadsheet,
 } from "lucide-react";
 import { getInsights, type AIRecommendation } from "@/_lib/ai-service";
+import { CsvImporterModal } from "./components/CsvImporterModal";
 
 type SortKey =
   | "name"
@@ -85,7 +87,7 @@ function getStatusVariant(status: string) {
 }
 
 export default function InventoryPage() {
-  const { items, addItem, updateItem, deleteItem } = useInventory();
+  const { items, addItem, updateItem, deleteItem, refreshData } = useInventory();
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -99,6 +101,7 @@ export default function InventoryPage() {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingItem, setDeletingItem] = useState<InventoryItem | null>(null);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   /* AI recommendations state */
   const [aiRecs, setAiRecs] = useState<AIRecommendation[]>([]);
@@ -310,11 +313,25 @@ export default function InventoryPage() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={openAddDialog}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Item
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsCsvModalOpen(true)}>
+            <FileSpreadsheet className="mr-2 h-4 w-4 text-emerald-600" />
+            Import CSV
+          </Button>
+          <Button onClick={openAddDialog} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Item
+          </Button>
+        </div>
       </div>
+
+      <CsvImporterModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setIsCsvModalOpen(false)}
+        onSuccess={() => {
+          refreshData();
+        }}
+      />
 
       <Card className="border border-border/60 shadow-none">
         <CardHeader className="pb-3">

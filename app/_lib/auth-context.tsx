@@ -19,7 +19,7 @@ interface AuthContextValue {
   login: (email: string, password: string, role?: "admin") => Promise<void>;
   signup: (email: string, password: string, name?: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
-  updateProfile: (data: { companyName: string; state: string; city: string }) => Promise<void>;
+  updateProfile: (data: { name?: string; companyName?: string; state?: string; city?: string }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -179,18 +179,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [supabase]);
 
   const updateProfile = useCallback(
-    async (data: { companyName: string; state: string; city: string }) => {
+    async (data: { name?: string; companyName?: string; state?: string; city?: string }) => {
       if (!user) return;
 
-      const { error } = await supabase.from("profiles").upsert({
+      const updates: any = {
         id: user.id,
         email: user.email,
-        company_name: data.companyName,
-        state: data.state,
-        city: data.city,
-        onboarding_completed: true,
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      if (data.name !== undefined) updates.full_name = data.name;
+      if (data.companyName !== undefined) updates.company_name = data.companyName;
+      if (data.state !== undefined) updates.state = data.state;
+      if (data.city !== undefined) updates.city = data.city;
+
+      const { error } = await supabase.from("profiles").upsert(updates);
 
       if (error) {
         throw new Error(error.message);
@@ -200,9 +203,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         prev
           ? {
               ...prev,
-              companyName: data.companyName,
-              state: data.state,
-              city: data.city,
+              name: data.name !== undefined ? data.name : prev.name,
+              companyName: data.companyName !== undefined ? data.companyName : prev.companyName,
+              state: data.state !== undefined ? data.state : prev.state,
+              city: data.city !== undefined ? data.city : prev.city,
               onboardingCompleted: true,
             }
           : null

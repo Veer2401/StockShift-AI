@@ -19,6 +19,9 @@ import {
   Warehouse,
   MapPin,
   Building2,
+  Users,
+  BarChart3,
+  FileCode,
 } from "lucide-react";
 import { useAuth } from "@/_lib/auth-context";
 import { BrandMark } from "@/_components/brand-mark";
@@ -30,6 +33,7 @@ import {
   AnimatePresence,
   motion,
 } from "motion/react";
+import { AiAgentWidget } from "./components/AiAgentWidget";
 
 const sidebarSections = [
   {
@@ -42,8 +46,11 @@ const sidebarSections = [
     title: "Management",
     items: [
       { label: "Inventory", href: "/admin/inventory", icon: Package },
+      { label: "Vendors", href: "/admin/vendors", icon: Users },
+      { label: "Purchase Orders", href: "/admin/purchase-orders", icon: FileText },
+      { label: "Documents RAG", href: "/admin/documents", icon: FileCode },
       { label: "Finance", href: "/admin/finance", icon: TrendingUp },
-      { label: "Reports", href: "/admin/reports", icon: FileText },
+      { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     ],
   },
   {
@@ -316,6 +323,9 @@ export default function AdminLayout({
           </div>
         </main>
       </div>
+
+      {/* Global Autonomous ShiftAI Action Agent */}
+      <AiAgentWidget />
     </div>
   );
 }
