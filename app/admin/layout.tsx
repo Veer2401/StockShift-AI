@@ -13,13 +13,13 @@ import {
   X,
   LogOut,
   Settings,
-  Boxes,
   ChevronUp,
   DollarSign,
   Target,
   Warehouse,
 } from "lucide-react";
 import { useAuth } from "@/_lib/auth-context";
+import { BrandMark } from "@/_components/brand-mark";
 import { cn } from "@/_lib/utils";
 import { Button } from "@/_components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/_components/ui/avatar";
@@ -74,7 +74,7 @@ function BottomSection({
   user: any;
   router: any;
   pathname: string;
-  logout: () => void;
+  logout: () => Promise<void>;
 }) {
   const [showSignOut, setShowSignOut] = useState(false);
   const isSettingsActive = pathname.startsWith("/admin/settings");
@@ -134,8 +134,8 @@ function BottomSection({
             className="overflow-hidden"
           >
             <button
-              onClick={() => {
-                logout();
+              onClick={async () => {
+                await logout();
                 router.replace("/login");
               }}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
@@ -198,7 +198,7 @@ export default function AdminLayout({
       {/* Sidebar header */}
       <div className="flex h-14 items-center justify-between px-5">
         <div className="flex items-center gap-2">
-          <Boxes className="h-5 w-5 text-foreground" />
+          <BrandMark className="h-5 w-5" strokeClassName="text-foreground" />
           <span className="text-lg font-bold uppercase tracking-wide text-foreground">
             StockShiftAI
           </span>

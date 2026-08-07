@@ -63,7 +63,7 @@ There are **no cron jobs, no background workers, and no CI/CD pipelines** in the
 | Layer        | Tech |
 |-------------|------|
 | Frontend    | Next.js 14 (App Router), React 18, TypeScript, Tailwind, shadcn/ui, Motion, Lenis, Recharts |
-| Auth        | Firebase Auth (Google + email/password); role in localStorage |
+| Auth        | Local mock auth (email/password); Supabase migration pending |
 | Frontend data | localStorage (inventory + transactions); mock data + finance-analytics for finance |
 | Backend     | Flask 3, Flask-CORS, Gunicorn |
 | AI          | OpenRouter (e.g. `google/gemini-2.0-flash-001`) |

@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { cn } from "@/_lib/utils";
-import { Boxes } from "lucide-react";
+import { BrandMark } from "./brand-mark";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import {
   motion,
@@ -236,7 +236,7 @@ export const NavbarLogo = () => {
       href="/"
       className="relative z-20 mr-4 flex items-center space-x-2 px-2 py-1 text-sm font-normal text-black"
     >
-      <Boxes className="h-6 w-6 text-black" />
+      <BrandMark className="h-6 w-6" strokeClassName="text-black" />
       <span className="text-sm font-medium tracking-[0.24em] uppercase text-black">
         StockShiftAI
       </span>
