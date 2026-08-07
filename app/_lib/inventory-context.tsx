@@ -59,7 +59,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       if (itemsError) {
         console.warn("Error fetching inventory_items from Supabase:", itemsError.message);
       } else if (dbItems) {
-        const mappedItems: InventoryItem[] = dbItems.map((row) => ({
+        const mappedItems: InventoryItem[] = dbItems.map((row: any) => ({
           id: row.id,
           name: row.name,
           sku: row.sku,
@@ -86,7 +86,7 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
       if (txnsError) {
         console.warn("Error fetching transactions from Supabase:", txnsError.message);
       } else if (dbTxns) {
-        const mappedTxns: Transaction[] = dbTxns.map((row) => ({
+        const mappedTxns: Transaction[] = dbTxns.map((row: any) => ({
           id: row.id,
           itemId: row.item_id,
           itemName: row.item_name,
@@ -159,6 +159,15 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     async (id: string, updates: Partial<InventoryItem>) => {
       if (!user) return;
 
+      // Optimistic state update for instant UI feedback
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? { ...item, ...updates, updatedAt: new Date().toISOString() }
+            : item
+        )
+      );
+
       const payload: Record<string, any> = {
         updated_at: new Date().toISOString(),
       };
@@ -179,16 +188,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         .eq("user_id", user.id);
 
       if (error) {
-        throw new Error(error.message);
+        console.error("Supabase update error:", error);
       }
-
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? { ...item, ...updates, updatedAt: new Date().toISOString() }
-            : item
-        )
-      );
     },
     [supabase, user]
   );
@@ -197,6 +198,9 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
     async (id: string) => {
       if (!user) return;
 
+      // Optimistic delete
+      setItems((prev) => prev.filter((item) => item.id !== id));
+
       const { error } = await supabase
         .from("inventory_items")
         .delete()
@@ -204,10 +208,8 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         .eq("user_id", user.id);
 
       if (error) {
-        throw new Error(error.message);
+        console.error("Supabase delete error:", error);
       }
-
-      setItems((prev) => prev.filter((item) => item.id !== id));
     },
     [supabase, user]
   );

@@ -48,7 +48,7 @@ export default function PurchaseOrdersPage() {
 
       if (poRes.data) {
         setPurchaseOrders(
-          poRes.data.map((row) => ({
+          poRes.data.map((row: any) => ({
             id: row.id,
             poNumber: row.po_number,
             vendorId: row.vendor_id,
@@ -64,7 +64,7 @@ export default function PurchaseOrdersPage() {
 
       if (vendorRes.data) {
         setVendors(
-          vendorRes.data.map((v) => ({
+          vendorRes.data.map((v: any) => ({
             id: v.id,
             name: v.name,
             email: v.email,

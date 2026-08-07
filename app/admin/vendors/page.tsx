@@ -51,7 +51,7 @@ export default function VendorsPage() {
 
       if (!error && data) {
         setVendors(
-          data.map((row) => ({
+          data.map((row: any) => ({
             id: row.id,
             name: row.name,
             contactPerson: row.contact_person || "",
