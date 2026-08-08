@@ -43,7 +43,7 @@ export function AiAgentWidget() {
     {
       id: "m-1",
       sender: "agent",
-      text: "👋 Hi, I'm your ShiftAI Autonomous Operations Agent. I can add new inventory items and execute database updates directly! Try asking me:\n• 'Add new item Smart Watch 50 units cost 1200'\n• 'Add 50 stock to low stock items'\n• 'Draft purchase order for suppliers'",
+      text: "👋 Hi! I can help you add items and update stock. Try asking:\n• 'Add Smart Watch 50 units'\n• 'Add 50 stock to low stock items'",
     },
   ]);
 
@@ -77,7 +77,8 @@ export function AiAgentWidget() {
         q.includes("add item") ||
         q.includes("insert item") ||
         q.includes("add product") ||
-        q.includes("new product");
+        q.includes("new product") ||
+        q.includes("add");
 
       // Search if user mentioned an existing item name or SKU
       const existingMatch = items.find(
@@ -86,10 +87,10 @@ export function AiAgentWidget() {
 
       if (existingMatch) {
         // Add stock to existing item
-        responseText = `Matched existing product **${existingMatch.name}** (${existingMatch.sku}). Ready to execute a database update of +${parsedQty} stock.`;
+        responseText = `Found **${existingMatch.name}** (${existingMatch.sku}). Ready to add ${parsedQty} units.`;
         actionCard = {
           type: "add_stock",
-          title: `Add +${parsedQty} Stock to ${existingMatch.name}`,
+          title: `Add ${parsedQty} units to ${existingMatch.name}`,
           sku: existingMatch.sku,
           itemId: existingMatch.id,
           suggestedQty: parsedQty,
@@ -103,15 +104,16 @@ export function AiAgentWidget() {
           .replace(/create\s+item/i, "")
           .replace(/add\s+product/i, "")
           .replace(/new\s+product/i, "")
+          .replace(/add/i, "")
           .replace(/\d+\s*(units|qty|quantity|items|cost|price|rs|inr|\$)?/gi, "")
-          .trim() || "New Product";
+          .trim() || "New Item";
 
         const skuCode = `SKU-${Date.now().toString().slice(-4)}`;
 
-        responseText = `Prepared database creation payload for new product **${cleanedName}** (${skuCode}) with **${parsedQty} units**. Click below to confirm and insert into Supabase DB.`;
+        responseText = `Ready to add **${cleanedName}** (${parsedQty} units) to inventory.`;
         actionCard = {
           type: "create_new_item",
-          title: `Create & Insert: ${cleanedName} (${parsedQty} units)`,
+          title: `Add ${cleanedName} (${parsedQty} units)`,
           newItemData: {
             name: cleanedName,
             sku: skuCode,
@@ -124,23 +126,23 @@ export function AiAgentWidget() {
           },
           executed: false,
         };
-      } else if (q.includes("add") || q.includes("stock") || q.includes("replenish")) {
+      } else if (q.includes("stock") || q.includes("replenish")) {
         const lowStockItem = items.find((i) => i.quantity <= i.reorderPoint) || items[0];
         if (lowStockItem) {
-          responseText = `Found target stock item **${lowStockItem.name}** (${lowStockItem.sku}). I can execute an immediate stock addition of +${parsedQty} units to your Supabase database.`;
+          responseText = `Found **${lowStockItem.name}**. Ready to add ${parsedQty} units.`;
           actionCard = {
             type: "add_stock",
-            title: `Add +${parsedQty} Stock to ${lowStockItem.name}`,
+            title: `Add ${parsedQty} units to ${lowStockItem.name}`,
             sku: lowStockItem.sku,
             itemId: lowStockItem.id,
             suggestedQty: parsedQty,
             executed: false,
           };
         } else {
-          responseText = "You have 0 items in inventory. Tell me: 'Add item Steel Rods 100 units' to create your first product!";
+          responseText = "Tell me: 'Add Smart Watch 50 units' to add your item!";
         }
       } else if (q.includes("po") || q.includes("purchase order") || q.includes("reorder")) {
-        responseText = "I calculated your stockout risks. Ready to draft an automated Purchase Order for your suppliers.";
+        responseText = "Ready to draft a Purchase Order for suppliers.";
         actionCard = {
           type: "create_po",
           title: "Draft Reorder Purchase Order",
@@ -148,7 +150,7 @@ export function AiAgentWidget() {
           executed: false,
         };
       } else if (q.includes("reorder point") || q.includes("threshold") || q.includes("safety")) {
-        responseText = "Analyzed demand velocity across categories. Recommending a safety threshold adjustment of 20 units.";
+        responseText = "Recommending a safety threshold adjustment of 20 units.";
         actionCard = {
           type: "update_reorder",
           title: "Adjust Reorder Point to 20 Units",
@@ -157,7 +159,7 @@ export function AiAgentWidget() {
           executed: false,
         };
       } else {
-        responseText = `Analyzed your inventory database. You have ${items.length} active SKUs. Tell me what item to add or update!`;
+        responseText = `You have ${items.length} items in inventory. Tell me what item to add or update!`;
       }
 
       setMessages((prev) => [
@@ -170,16 +172,23 @@ export function AiAgentWidget() {
         },
       ]);
       setIsProcessing(false);
-    }, 600);
+    }, 500);
   };
 
   const handleExecuteAction = async (msgId: string, card: NonNullable<AgentMessage["actionCard"]>) => {
+    let itemName = "Item";
+    let qty = 50;
+
     if (card.type === "create_new_item" && card.newItemData) {
       await addItem(card.newItemData);
+      itemName = card.newItemData.name;
+      qty = card.newItemData.quantity;
     } else if (card.type === "add_stock" && card.itemId) {
       const target = items.find((i) => i.id === card.itemId);
       if (target) {
-        await updateItem(card.itemId, { quantity: target.quantity + (card.suggestedQty || 50) });
+        qty = card.suggestedQty || 50;
+        itemName = target.name;
+        await updateItem(card.itemId, { quantity: target.quantity + qty });
       }
     } else if (card.type === "update_reorder" && card.itemId) {
       await updateItem(card.itemId, { reorderPoint: card.suggestedQty || 20 });
@@ -190,17 +199,25 @@ export function AiAgentWidget() {
 
     await refreshData();
 
-    // Mark card executed
-    setMessages((prev) =>
-      prev.map((m) =>
+    // Mark card executed & add simple confirmation message
+    setMessages((prev) => {
+      const updated = prev.map((m) =>
         m.id === msgId && m.actionCard
           ? {
               ...m,
               actionCard: { ...m.actionCard, executed: true },
             }
           : m
-      )
-    );
+      );
+      return [
+        ...updated,
+        {
+          id: `confirm-${Date.now()}`,
+          sender: "agent",
+          text: `Added ${itemName} (${qty} units) to inventory.`,
+        },
+      ];
+    });
   };
 
   return (
@@ -211,7 +228,7 @@ export function AiAgentWidget() {
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-white shadow-xl hover:bg-emerald-500 transition-all hover:scale-105"
       >
         <Bot className="h-5 w-5" />
-        <span className="font-bold text-sm hidden sm:inline">ShiftAI Action Agent</span>
+        <span className="font-bold text-sm hidden sm:inline">ShiftAI Assistant</span>
       </button>
 
       {/* Side-Panel Drawer */}
@@ -225,12 +242,12 @@ export function AiAgentWidget() {
               </div>
               <div>
                 <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
-                  ShiftAI Action Agent
+                  ShiftAI Assistant
                   <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 text-[10px] border-0">
                     ONLINE
                   </Badge>
                 </h3>
-                <p className="text-xs text-muted-foreground">Autonomous Operations Copilot</p>
+                <p className="text-xs text-muted-foreground">Inventory &amp; Operations Assistant</p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
@@ -259,23 +276,18 @@ export function AiAgentWidget() {
 
                 {/* Interactive Agent Action Card */}
                 {msg.actionCard && (
-                  <div className="w-[88%] p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 space-y-2">
-                    <div className="flex items-center gap-1.5 font-bold text-emerald-600">
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>{msg.actionCard.title}</span>
-                    </div>
+                  <div className="w-[88%] p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2">
+                    <p className="font-semibold text-emerald-900 text-xs">{msg.actionCard.title}</p>
 
                     {msg.actionCard.executed ? (
-                      <div className="flex items-center gap-1.5 text-emerald-600 font-semibold pt-1">
-                        <CheckCircle2 className="w-4 h-4" /> Action Executed on Supabase DB!
-                      </div>
+                      <p className="text-emerald-700 font-semibold text-xs">✓ Added successfully</p>
                     ) : (
                       <Button
                         size="sm"
                         onClick={() => handleExecuteAction(msg.id, msg.actionCard!)}
-                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium mt-1"
+                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg"
                       >
-                        ⚡ Confirm &amp; Execute Action
+                        Confirm Add
                       </Button>
                     )}
                   </div>
@@ -285,7 +297,7 @@ export function AiAgentWidget() {
             {isProcessing && (
               <div className="text-muted-foreground italic text-xs flex items-center gap-2">
                 <Bot className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-                ShiftAI Agent analyzing database telemetry...
+                Processing request...
               </div>
             )}
           </div>

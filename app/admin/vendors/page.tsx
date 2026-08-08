@@ -15,7 +15,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/_components/ui/dialog";
-import { Users, Plus, Mail, Phone, Clock, Package, Building2, Trash2, Edit } from "lucide-react";
+import { Users, Plus, Mail, Phone, Clock, Package, Building2, Trash2, Edit, Sparkles, Loader2 } from "lucide-react";
+import { cn } from "@/_lib/utils";
 import type { Vendor } from "@/_lib/types";
 
 export default function VendorsPage() {
@@ -26,6 +27,10 @@ export default function VendorsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+  const [modalTab, setModalTab] = useState<"manual" | "ai">("manual");
+  const [aiRawText, setAiRawText] = useState("");
+  const [aiParsing, setAiParsing] = useState(false);
+  const [aiError, setAiError] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -79,6 +84,9 @@ export default function VendorsPage() {
 
   const handleOpenAdd = () => {
     setEditingVendor(null);
+    setModalTab("manual");
+    setAiRawText("");
+    setAiError("");
     setFormData({
       name: "",
       contactPerson: "",
@@ -91,6 +99,41 @@ export default function VendorsPage() {
       notes: "",
     });
     setIsModalOpen(true);
+  };
+
+  const handleAiParseVendor = async () => {
+    if (!aiRawText.trim()) return;
+    setAiParsing(true);
+    setAiError("");
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_AI_BACKEND_URL || "http://localhost:5001";
+      const res = await fetch(`${backendUrl}/api/ai/parse-vendor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: aiRawText }),
+      });
+      const data = await res.json();
+      if (data.vendor) {
+        setFormData({
+          name: data.vendor.name || "",
+          contactPerson: data.vendor.contactPerson || "",
+          email: data.vendor.email || "",
+          phone: data.vendor.phone || "",
+          address: data.vendor.address || "",
+          leadTimeDays: Number(data.vendor.leadTimeDays) || 7,
+          minOrderQty: Number(data.vendor.minOrderQty) || 10,
+          paymentTerms: data.vendor.paymentTerms || "Net 30",
+          notes: data.vendor.notes || "",
+        });
+        setModalTab("manual"); // Switch to manual tab to show filled form
+      } else {
+        setAiError(data.error || "Could not extract vendor details.");
+      }
+    } catch {
+      setAiError("AI service unavailable. Please fill details manually.");
+    } finally {
+      setAiParsing(false);
+    }
   };
 
   const handleOpenEdit = (v: Vendor) => {
@@ -244,94 +287,153 @@ export default function VendorsPage() {
 
       {/* Add / Edit Dialog */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[540px]">
           <DialogHeader>
             <DialogTitle>{editingVendor ? "Edit Vendor Details" : "Add New Vendor"}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4 text-sm">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>Vendor / Company Name *</Label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Apex Electronics Ltd"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Contact Person</Label>
-                <Input
-                  value={formData.contactPerson}
-                  onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
-                  placeholder="Rahul Sharma"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <Label>Email Address *</Label>
-                <Input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="orders@apexelectronics.in"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Phone Number</Label>
-                <Input
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+91 98765 43210"
-                />
-              </div>
+          {/* Tab switcher (only on Add, not Edit) */}
+          {!editingVendor && (
+            <div className="flex gap-1 bg-muted/30 rounded-lg p-1 mb-2">
+              <button
+                onClick={() => setModalTab("manual")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold transition-all",
+                  modalTab === "manual" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Edit className="h-3.5 w-3.5" /> Manual Entry
+              </button>
+              <button
+                onClick={() => setModalTab("ai")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-semibold transition-all",
+                  modalTab === "ai" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <Sparkles className="h-3.5 w-3.5" /> AI Auto-Fill
+              </button>
             </div>
+          )}
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label>Lead Time (Days)</Label>
-                <Input
-                  type="number"
-                  value={formData.leadTimeDays}
-                  onChange={(e) => setFormData({ ...formData, leadTimeDays: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Min Order Qty</Label>
-                <Input
-                  type="number"
-                  value={formData.minOrderQty}
-                  onChange={(e) => setFormData({ ...formData, minOrderQty: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Payment Terms</Label>
-                <Input
-                  value={formData.paymentTerms}
-                  onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
-                  placeholder="Net 30"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label>Factory / Office Address</Label>
-              <Input
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Plot 42, MIDC Industrial Area, Pune"
+          {/* AI Auto-Fill Tab */}
+          {modalTab === "ai" && !editingVendor && (
+            <div className="space-y-3 py-2">
+              <p className="text-xs text-muted-foreground">
+                Paste a vendor invoice, rate card, email, or website text below and AI will extract all details.
+              </p>
+              <textarea
+                value={aiRawText}
+                onChange={(e) => setAiRawText(e.target.value)}
+                placeholder={`e.g.\nApex Electronics Ltd\nContact: Rahul Sharma\nEmail: orders@apex.in\nPhone: +91 98765 43210\nPayment: Net 30 days\nMinimum Order: 50 units\nDelivery: 5-7 business days\nAddress: Plot 42, MIDC, Pune`}
+                rows={7}
+                className="w-full rounded-xl border border-border/60 bg-background px-3 py-2.5 text-xs placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 resize-none"
               />
+              {aiError && <p className="text-xs text-red-500">{aiError}</p>}
+              <Button
+                onClick={handleAiParseVendor}
+                disabled={aiParsing || !aiRawText.trim()}
+                className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold"
+              >
+                {aiParsing ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting...</>
+                ) : (
+                  <><Sparkles className="mr-2 h-4 w-4" /> Extract Vendor Details</>
+                )}
+              </Button>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
-              Save Vendor
-            </Button>
-          </DialogFooter>
+          )}
+
+          {/* Manual Entry Tab */}
+          {(modalTab === "manual" || editingVendor) && (
+            <div className="grid gap-4 py-2 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Vendor / Company Name *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Apex Electronics Ltd"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Contact Person</Label>
+                  <Input
+                    value={formData.contactPerson}
+                    onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
+                    placeholder="Rahul Sharma"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label>Email Address *</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="orders@apexelectronics.in"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Phone Number</Label>
+                  <Input
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Lead Time (Days)</Label>
+                  <Input
+                    type="number"
+                    value={formData.leadTimeDays}
+                    onChange={(e) => setFormData({ ...formData, leadTimeDays: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Min Order Qty</Label>
+                  <Input
+                    type="number"
+                    value={formData.minOrderQty}
+                    onChange={(e) => setFormData({ ...formData, minOrderQty: Number(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Payment Terms</Label>
+                  <Input
+                    value={formData.paymentTerms}
+                    onChange={(e) => setFormData({ ...formData, paymentTerms: e.target.value })}
+                    placeholder="Net 30"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label>Factory / Office Address</Label>
+                <Input
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  placeholder="Plot 42, MIDC Industrial Area, Pune"
+                />
+              </div>
+            </div>
+          )}
+
+          {(modalTab === "manual" || editingVendor) && (
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSave} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+                Save Vendor
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
     </div>

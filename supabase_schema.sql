@@ -206,5 +206,25 @@ CREATE POLICY "Users can insert their own purchase orders" ON public.purchase_or
 CREATE POLICY "Users can update their own purchase orders" ON public.purchase_orders FOR UPDATE TO authenticated USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete their own purchase orders" ON public.purchase_orders FOR DELETE TO authenticated USING (auth.uid() = user_id);
 
--- 7. Force PostgREST schema cache reload
+-- 7. Create API Keys Table (for POS / external integrations)
+CREATE TABLE IF NOT EXISTS public.api_keys (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  key TEXT NOT NULL UNIQUE,
+  label TEXT DEFAULT 'Default POS Key',
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view their own api keys" ON public.api_keys;
+DROP POLICY IF EXISTS "Users can insert their own api keys" ON public.api_keys;
+DROP POLICY IF EXISTS "Users can update their own api keys" ON public.api_keys;
+
+CREATE POLICY "Users can view their own api keys" ON public.api_keys FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert their own api keys" ON public.api_keys FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own api keys" ON public.api_keys FOR UPDATE TO authenticated USING (auth.uid() = user_id);
+
+-- 8. Force PostgREST schema cache reload
 NOTIFY pgrst, 'reload schema';

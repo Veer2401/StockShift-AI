@@ -194,7 +194,7 @@ def _get_fallback_sku(sku: str) -> dict | None:
 # ── Helper: call LLM via OpenRouter ─────────────────────────────────────────
 
 
-def call_llm(system_prompt: str, user_prompt: str) -> str:
+def call_llm(system_prompt: str, user_prompt: str, max_tokens: int = 2500) -> str:
     """Send a prompt to OpenRouter with automatic API key failover & load balancing."""
     if not API_KEYS:
         print("⚠️ No OpenRouter API key configured.")
@@ -213,7 +213,7 @@ def call_llm(system_prompt: str, user_prompt: str) -> str:
                     {"role": "user", "content": user_prompt},
                 ],
                 temperature=0.1,
-                max_tokens=1000,
+                max_tokens=max_tokens,
                 timeout=25,
             )
             content = response.choices[0].message.content or ""
@@ -887,6 +887,310 @@ Return ONLY valid JSON (no markdown):
             "network_health_score": 50,
             "total_transfer_savings": 0
         })
+
+
+# ── AI Onboarding Catalog Generator ──────────────────────────────────────────
+
+_FALLBACK_CATALOGS = {
+    "Electronics & Gadgets": [
+        {"name": "Wireless Noise Cancelling Earbuds", "sku": "ELC-001", "category": "Audio", "quantity": 45, "unitCost": 1800, "sellPrice": 3499, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "65W Fast Charging USB-C Adapter", "sku": "ELC-002", "category": "Accessories", "quantity": 120, "unitCost": 450, "sellPrice": 999, "reorderPoint": 25, "location": "Main Warehouse"},
+        {"name": "RGB Mechanical Gaming Keyboard", "sku": "ELC-003", "category": "Peripherals", "quantity": 30, "unitCost": 2200, "sellPrice": 4299, "reorderPoint": 8, "location": "Store Front"},
+        {"name": "Ultra-Wide 27-inch 4K Monitor", "sku": "ELC-004", "category": "Displays", "quantity": 15, "unitCost": 14500, "sellPrice": 21999, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "10000mAh Slim Power Bank", "sku": "ELC-005", "category": "Accessories", "quantity": 80, "unitCost": 600, "sellPrice": 1299, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "Full HD Web Camera 1080p", "sku": "ELC-006", "category": "Peripherals", "quantity": 50, "unitCost": 950, "sellPrice": 1899, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "Smart Fitness Watch v2", "sku": "ELC-007", "category": "Wearables", "quantity": 60, "unitCost": 1500, "sellPrice": 2999, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Ergonomic Wireless Mouse", "sku": "ELC-008", "category": "Peripherals", "quantity": 90, "unitCost": 350, "sellPrice": 799, "reorderPoint": 20, "location": "Main Warehouse"}
+    ],
+    "FMCG & Grocery": [
+        {"name": "Basmati Premium Rice 5kg", "sku": "FMC-001", "category": "Staples", "quantity": 150, "unitCost": 320, "sellPrice": 499, "reorderPoint": 30, "location": "Main Warehouse"},
+        {"name": "Refined Sunflower Oil 1L", "sku": "FMC-002", "category": "Oils & Ghee", "quantity": 200, "unitCost": 110, "sellPrice": 145, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Organic Whole Wheat Atta 10kg", "sku": "FMC-003", "category": "Staples", "quantity": 100, "unitCost": 340, "sellPrice": 450, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Dark Chocolate Roasted Almond Bar", "sku": "FMC-004", "category": "Snacks", "quantity": 300, "unitCost": 45, "sellPrice": 90, "reorderPoint": 50, "location": "Store Front"},
+        {"name": "Green Tea Honey Lemon 100g", "sku": "FMC-005", "category": "Beverages", "quantity": 80, "unitCost": 130, "sellPrice": 220, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Antibacterial Hand Wash 500ml", "sku": "FMC-006", "category": "Personal Care", "quantity": 120, "unitCost": 70, "sellPrice": 135, "reorderPoint": 25, "location": "Store Front"}
+    ],
+    "Pharmacy & Healthcare": [
+        {"name": "Paracetamol 650mg Tablets (Strip of 15)", "sku": "PHM-001", "category": "OTC Medicine", "quantity": 500, "unitCost": 12, "sellPrice": 30, "reorderPoint": 100, "location": "Pharmacy Shelf A"},
+        {"name": "Vitamin C + Zinc Chewable (30 Tabs)", "sku": "PHM-002", "category": "Supplements", "quantity": 150, "unitCost": 85, "sellPrice": 175, "reorderPoint": 30, "location": "Pharmacy Shelf B"},
+        {"name": "Digital Infrared Thermometer", "sku": "PHM-003", "category": "Devices", "quantity": 40, "unitCost": 650, "sellPrice": 1299, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "Automatic Blood Pressure Monitor", "sku": "PHM-004", "category": "Devices", "quantity": 25, "unitCost": 1100, "sellPrice": 1999, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "Antiseptic Liquid 500ml", "sku": "PHM-005", "category": "First Aid", "quantity": 100, "unitCost": 90, "sellPrice": 145, "reorderPoint": 20, "location": "Pharmacy Shelf A"}
+    ]
+}
+
+_DEFAULT_CATALOG = [
+    {"name": "Standard Product A", "sku": "GEN-001", "category": "General", "quantity": 50, "unitCost": 250, "sellPrice": 499, "reorderPoint": 10, "location": "Main Warehouse"},
+    {"name": "Premium Product B", "sku": "GEN-002", "category": "General", "quantity": 30, "unitCost": 750, "sellPrice": 1299, "reorderPoint": 8, "location": "Main Warehouse"},
+    {"name": "Compact Product C", "sku": "GEN-003", "category": "General", "quantity": 100, "unitCost": 90, "sellPrice": 199, "reorderPoint": 20, "location": "Store Front"},
+    {"name": "Deluxe Product D", "sku": "GEN-004", "category": "Premium", "quantity": 20, "unitCost": 1500, "sellPrice": 2999, "reorderPoint": 5, "location": "Main Warehouse"}
+]
+
+
+@app.route("/api/ai/onboard-catalog", methods=["POST"])
+def ai_onboard_catalog():
+    """Generate a starter inventory catalog for a new business based on industry type."""
+    body = request.get_json(force=True) or {}
+    industry = body.get("industry", "General Retail")
+    company_name = body.get("companyName", "My Business")
+
+    system = """You are StockShiftAI, an inventory setup assistant.
+Generate a realistic starter catalog of 8-10 inventory items for a business.
+Return ONLY valid JSON in this format:
+{"items": [{"name": "Item Name", "sku": "SKU-001", "category": "Category", "quantity": 50, "unitCost": 200, "sellPrice": 400, "reorderPoint": 10, "location": "Main Warehouse"}]}
+Prices in INR (₹). Do NOT include markdown code fences or explanatory text."""
+
+    user_prompt = f"Generate 8 inventory items for Company: {company_name}, Industry: {industry}."
+
+    raw = call_llm(system, user_prompt, max_tokens=2500)
+
+    if raw:
+        parsed = _extract_json(raw)
+        if parsed and "items" in parsed and isinstance(parsed["items"], list) and len(parsed["items"]) > 0:
+            return jsonify(parsed)
+
+        # Try parsing array directly
+        try:
+            cleaned = raw.strip()
+            if cleaned.startswith("```"):
+                parts = cleaned.split("\n", 1)
+                if len(parts) > 1:
+                    cleaned = parts[1]
+                if cleaned.endswith("```"):
+                    cleaned = cleaned.rsplit("```", 1)[0]
+                cleaned = cleaned.strip()
+            arr = json.loads(cleaned)
+            if isinstance(arr, list) and len(arr) > 0:
+                return jsonify({"items": arr})
+        except json.JSONDecodeError:
+            pass
+
+    # High-quality fallback catalog matching industry
+    fallback = _FALLBACK_CATALOGS.get(industry, _DEFAULT_CATALOG)
+    print(f"ℹ️ Returning starter catalog fallback for industry: {industry}")
+    return jsonify({"items": fallback})
+
+
+# ── AI Vendor Auto-Extraction ─────────────────────────────────────────────────
+
+@app.route("/api/ai/parse-vendor", methods=["POST"])
+def ai_parse_vendor():
+    """Extract structured vendor details from raw text (invoice, rate card, website copy)."""
+    body = request.get_json(force=True) or {}
+    raw_text = body.get("text", "")
+
+    if not raw_text.strip():
+        return jsonify({"error": "No text provided"}), 400
+
+    system = """You are StockShiftAI, a vendor data extraction assistant.
+Extract structured vendor information from the provided raw text.
+Return ONLY a valid JSON object with these keys:
+- name (string, company/vendor name)
+- contactPerson (string or empty)
+- email (string or empty)
+- phone (string or empty)
+- address (string or empty)
+- leadTimeDays (integer, estimate if not stated, default 7)
+- minOrderQty (integer, estimate if not stated, default 10)
+- paymentTerms (string like "Net 30", "COD", etc.)
+- notes (string, any extra details)
+
+If info is missing, use reasonable defaults. Do NOT return markdown or code fences."""
+
+    user_prompt = f"Extract vendor details from this text:\n\n{raw_text[:3000]}"
+
+    raw = call_llm(system, user_prompt)
+    if not raw:
+        return jsonify({"error": "AI service unavailable"}), 503
+
+    parsed = _extract_json(raw)
+    if parsed and "name" in parsed:
+        return jsonify({"vendor": parsed})
+
+    return jsonify({"error": "Failed to parse vendor data"}), 500
+
+
+# ── POS Checkout API (for local store machines) ───────────────────────────────
+
+def _validate_api_key(api_key: str) -> dict | None:
+    """Validate an API key against the api_keys table in Supabase. Returns key row or None."""
+    if not supabase or not api_key:
+        return None
+    try:
+        res = supabase.table("api_keys").select("*").eq("key", api_key).eq("is_active", True).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
+    except Exception as e:
+        print(f"⚠️ API key validation error: {e}")
+    return None
+
+
+@app.route("/api/v1/pos/checkout", methods=["POST"])
+def pos_checkout():
+    """Process a POS sale: deduct inventory for each item sold.
+    
+    Expects:
+    - Header: x-api-key OR Authorization: Bearer <key>
+    - Body: { "items": [{ "sku": "...", "quantity": 1 }], "userId": "..." }
+    
+    For web-based POS terminal, userId from auth session is used directly (no api key needed if Supabase auth header present).
+    """
+    body = request.get_json(force=True) or {}
+    sale_items = body.get("items", [])
+    user_id = body.get("userId", "")
+
+    if not sale_items:
+        return jsonify({"error": "No items in checkout"}), 400
+
+    # Validate: either API key or userId must be present
+    api_key = request.headers.get("x-api-key") or ""
+    if not api_key:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            api_key = auth_header[7:]
+
+    # If API key is provided, validate it and extract userId from the key record
+    if api_key and not user_id:
+        key_record = _validate_api_key(api_key)
+        if not key_record:
+            return jsonify({"error": "Invalid or revoked API key"}), 401
+        user_id = key_record.get("user_id", "")
+
+    if not user_id:
+        return jsonify({"error": "User identification required (userId or valid API key)"}), 401
+
+    if not supabase:
+        return jsonify({"error": "Database unavailable"}), 503
+
+    results = []
+    low_stock_alerts = []
+
+    for sale_item in sale_items:
+        sku = sale_item.get("sku", "")
+        qty = int(sale_item.get("quantity", 1))
+
+        if not sku or qty <= 0:
+            results.append({"sku": sku, "status": "error", "message": "Invalid SKU or quantity"})
+            continue
+
+        try:
+            # Find the inventory item
+            res = supabase.table("inventory_items").select("*").eq("user_id", user_id).eq("sku", sku).execute()
+
+            if not res.data or len(res.data) == 0:
+                results.append({"sku": sku, "status": "error", "message": f"Item with SKU {sku} not found"})
+                continue
+
+            item = res.data[0]
+            current_qty = int(item.get("quantity", 0))
+            new_qty = max(0, current_qty - qty)
+
+            # Update quantity
+            supabase.table("inventory_items").update({
+                "quantity": new_qty,
+                "updated_at": datetime.now().isoformat()
+            }).eq("id", item["id"]).execute()
+
+            # Log transaction
+            supabase.table("transactions").insert({
+                "user_id": user_id,
+                "item_id": item["id"],
+                "item_name": item.get("name", sku),
+                "type": "out",
+                "quantity": qty,
+                "performed_by": "POS Terminal",
+                "notes": f"POS sale: {qty} units of {sku}"
+            }).execute()
+
+            item_result = {
+                "sku": sku,
+                "name": item.get("name", ""),
+                "status": "sold",
+                "quantitySold": qty,
+                "remainingStock": new_qty
+            }
+            results.append(item_result)
+
+            # Check for low stock alert
+            reorder_point = int(item.get("reorder_point", 0))
+            if new_qty <= reorder_point:
+                low_stock_alerts.append({
+                    "sku": sku,
+                    "name": item.get("name", ""),
+                    "remainingStock": new_qty,
+                    "reorderPoint": reorder_point
+                })
+
+        except Exception as e:
+            results.append({"sku": sku, "status": "error", "message": str(e)})
+
+    # Bust relevant caches since inventory changed
+    cache_bust("insights")
+    cache_bust("anomalies")
+
+    return jsonify({
+        "success": True,
+        "results": results,
+        "lowStockAlerts": low_stock_alerts,
+        "processedAt": datetime.now().isoformat()
+    })
+
+
+# ── API Key Management ────────────────────────────────────────────────────────
+
+@app.route("/api/v1/api-keys", methods=["POST"])
+def create_api_key():
+    """Generate a new API key for a user."""
+    body = request.get_json(force=True) or {}
+    user_id = body.get("userId", "")
+    label = body.get("label", "Default POS Key")
+
+    if not user_id:
+        return jsonify({"error": "userId required"}), 400
+
+    if not supabase:
+        return jsonify({"error": "Database unavailable"}), 503
+
+    import secrets
+    api_key = f"sk-pos-{secrets.token_hex(24)}"
+
+    try:
+        supabase.table("api_keys").insert({
+            "user_id": user_id,
+            "key": api_key,
+            "label": label,
+            "is_active": True
+        }).execute()
+
+        return jsonify({"key": api_key, "label": label})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v1/api-keys/<user_id>", methods=["GET"])
+def list_api_keys(user_id: str):
+    """List all API keys for a user."""
+    if not supabase:
+        return jsonify({"error": "Database unavailable"}), 503
+
+    try:
+        res = supabase.table("api_keys").select("id, key, label, is_active, created_at").eq("user_id", user_id).order("created_at", desc=True).execute()
+        return jsonify({"keys": res.data or []})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/v1/api-keys/<key_id>/revoke", methods=["POST"])
+def revoke_api_key(key_id: str):
+    """Revoke an API key."""
+    if not supabase:
+        return jsonify({"error": "Database unavailable"}), 503
+
+    try:
+        supabase.table("api_keys").update({"is_active": False}).eq("id", key_id).execute()
+        return jsonify({"status": "revoked"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/cache/clear", methods=["POST"])

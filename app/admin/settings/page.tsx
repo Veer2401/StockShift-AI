@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/_lib/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/_components/ui/avatar";
 import { Button } from "@/_components/ui/button";
@@ -14,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/_components/ui/card";
-import { User, Bell, Shield, Palette, Building2, ArrowRight } from "lucide-react";
+import { User, Bell, Shield, Palette, Building2, ArrowRight, LogOut, Key, Copy, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 function getInitials(name: string): string {
@@ -27,7 +28,8 @@ function getInitials(name: string): string {
 }
 
 export default function SettingsPage() {
-  const { user, updateProfile } = useAuth();
+  const router = useRouter();
+  const { user, updateProfile, logout } = useAuth();
   const [name, setName] = useState(user?.name ?? "");
   const [email, setEmail] = useState(user?.email ?? "");
   const [companyName, setCompanyName] = useState(user?.companyName ?? "");
@@ -35,6 +37,60 @@ export default function SettingsPage() {
   const [state, setState] = useState(user?.state ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // API keys state
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [isLoadingKeys, setIsLoadingKeys] = useState(false);
+  const [isCreatingKey, setIsCreatingKey] = useState(false);
+  const [newKeyLabel, setNewKeyLabel] = useState("POS Terminal Key");
+  const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
+
+  const backendUrl = process.env.NEXT_PUBLIC_AI_BACKEND_URL || "http://localhost:5001";
+
+  const fetchApiKeys = async () => {
+    if (!user) return;
+    setIsLoadingKeys(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/v1/api-keys/${user.id}`);
+      const data = await res.json();
+      setApiKeys(data.keys || []);
+    } catch { /* ignore */ }
+    setIsLoadingKeys(false);
+  };
+
+  useEffect(() => {
+    fetchApiKeys();
+  }, [user]);
+
+  const handleCreateKey = async () => {
+    if (!user) return;
+    setIsCreatingKey(true);
+    try {
+      const res = await fetch(`${backendUrl}/api/v1/api-keys`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, label: newKeyLabel }),
+      });
+      await res.json();
+      await fetchApiKeys();
+      setNewKeyLabel("POS Terminal Key");
+    } catch { /* ignore */ }
+    setIsCreatingKey(false);
+  };
+
+  const handleRevokeKey = async (keyId: string) => {
+    if (!confirm("Revoke this API key? This cannot be undone.")) return;
+    try {
+      await fetch(`${backendUrl}/api/v1/api-keys/${keyId}/revoke`, { method: "POST" });
+      await fetchApiKeys();
+    } catch { /* ignore */ }
+  };
+
+  const handleCopyKey = (key: string, keyId: string) => {
+    navigator.clipboard.writeText(key);
+    setCopiedKeyId(keyId);
+    setTimeout(() => setCopiedKeyId(null), 2000);
+  };
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
@@ -300,6 +356,129 @@ export default function SettingsPage() {
             </Button>
           </div>
         </CardContent>
+      </Card>
+
+      {/* API Keys & Integrations */}
+      <Card className="border-border">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+              <Key className="h-[18px] w-[18px]" />
+            </div>
+            <div>
+              <CardTitle className="text-base">API Keys & POS Integration</CardTitle>
+              <CardDescription>Generate API keys for external POS machines and store systems to sync inventory in real-time</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Create new key */}
+          <div className="flex items-end gap-3">
+            <div className="flex-1 space-y-1">
+              <Label htmlFor="keyLabel" className="text-xs">Key Label</Label>
+              <Input
+                id="keyLabel"
+                value={newKeyLabel}
+                onChange={(e) => setNewKeyLabel(e.target.value)}
+                placeholder="e.g. Store Counter 1"
+                className="h-9 text-sm"
+              />
+            </div>
+            <Button
+              onClick={handleCreateKey}
+              disabled={isCreatingKey}
+              size="sm"
+              className="bg-violet-600 hover:bg-violet-500 text-white font-medium"
+            >
+              {isCreatingKey ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate Key"}
+            </Button>
+          </div>
+
+          {/* Existing keys */}
+          {isLoadingKeys ? (
+            <p className="text-xs text-muted-foreground">Loading keys...</p>
+          ) : apiKeys.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No API keys generated yet. Create one to connect your POS system.</p>
+          ) : (
+            <div className="space-y-2">
+              {apiKeys.map((k: any) => (
+                <div key={k.id} className="flex items-center gap-3 rounded-lg border border-border/60 px-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-foreground">{k.label}</p>
+                    <p className="text-xs text-muted-foreground font-mono truncate">
+                      {k.key.slice(0, 20)}...{k.key.slice(-8)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {k.is_active ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => handleCopyKey(k.key, k.id)}
+                        >
+                          {copiedKeyId === k.id ? (
+                            <span className="text-emerald-600 text-xs">✓</span>
+                          ) : (
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-rose-500 hover:text-rose-700 text-xs h-7"
+                          onClick={() => handleRevokeKey(k.id)}
+                        >
+                          Revoke
+                        </Button>
+                      </>
+                    ) : (
+                      <span className="text-xs text-rose-500 font-medium">Revoked</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Usage docs */}
+          <div className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
+            <p className="font-semibold text-foreground">How to use:</p>
+            <p>Send a POST request to <code className="bg-muted px-1 rounded">your-server/api/v1/pos/checkout</code></p>
+            <p>Header: <code className="bg-muted px-1 rounded">x-api-key: your-key</code></p>
+            <p>Body: <code className="bg-muted px-1 rounded">{'{"items": [{"sku": "ELC-001", "quantity": 1}]}'}</code></p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Account Session & Sign Out */}
+      <Card className="border-rose-200/60 bg-rose-50/30">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-rose-100 text-rose-700">
+                <LogOut className="h-[18px] w-[18px]" />
+              </div>
+              <div>
+                <CardTitle className="text-base text-rose-900">Sign Out</CardTitle>
+                <CardDescription className="text-rose-700/80">
+                  End your current session on this device
+                </CardDescription>
+              </div>
+            </div>
+            <Button
+              onClick={async () => {
+                await logout();
+                router.replace("/login");
+              }}
+              className="bg-rose-600 hover:bg-rose-700 text-white font-semibold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer active:scale-[0.98] gap-2"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Sign Out</span>
+            </Button>
+          </div>
+        </CardHeader>
       </Card>
     </div>
   );

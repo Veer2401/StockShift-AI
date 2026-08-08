@@ -22,6 +22,7 @@ import {
   Users,
   BarChart3,
   FileCode,
+  ScanBarcode,
 } from "lucide-react";
 import { useAuth } from "@/_lib/auth-context";
 import { BrandMark } from "@/_components/brand-mark";
@@ -49,6 +50,7 @@ const sidebarSections = [
       { label: "Vendors", href: "/admin/vendors", icon: Users },
       { label: "Purchase Orders", href: "/admin/purchase-orders", icon: FileText },
       { label: "Documents RAG", href: "/admin/documents", icon: FileCode },
+      { label: "POS Terminal", href: "/admin/pos-terminal", icon: ScanBarcode },
       { label: "Finance", href: "/admin/finance", icon: TrendingUp },
       { label: "Reports", href: "/admin/reports", icon: BarChart3 },
     ],
@@ -73,86 +75,28 @@ function getInitials(name: string): string {
 }
 
 function BottomSection({
-  user,
   router,
   pathname,
-  logout,
 }: {
-  user: any;
   router: any;
   pathname: string;
-  logout: () => Promise<void>;
 }) {
-  const [showSignOut, setShowSignOut] = useState(false);
   const isSettingsActive = pathname.startsWith("/admin/settings");
 
   return (
-    <div className="mt-auto border-t border-black/5 px-3 py-3 space-y-1">
+    <div className="mt-auto border-t border-black/5 px-3 py-3">
       <button
         onClick={() => router.push("/admin/settings")}
         className={cn(
-          "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
           isSettingsActive
-            ? "bg-muted text-foreground font-medium"
+            ? "bg-slate-100 text-foreground font-semibold shadow-2xs"
             : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
         )}
       >
         <Settings className="h-[18px] w-[18px] shrink-0" />
         <span>Settings</span>
       </button>
-
-      <Separator className="my-2" />
-
-      <button
-        onClick={() => setShowSignOut((prev) => !prev)}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-muted/60"
-      >
-        <Avatar className="h-8 w-8">
-          {user?.avatar ? (
-            <AvatarImage src={user.avatar} alt={user.name} />
-          ) : null}
-          <AvatarFallback className="bg-muted text-xs text-foreground">
-            {user ? getInitials(user.name) : "?"}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0 text-left">
-          <p className="truncate text-sm font-medium text-foreground">
-            {user?.name}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {user?.companyName || user?.email}
-          </p>
-        </div>
-        <ChevronUp
-          className={cn(
-            "h-4 w-4 text-muted-foreground transition-transform duration-200",
-            showSignOut ? "rotate-0" : "rotate-180"
-          )}
-        />
-      </button>
-
-      <AnimatePresence>
-        {showSignOut && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="overflow-hidden"
-          >
-            <button
-              onClick={async () => {
-                await logout();
-                router.replace("/login");
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-            >
-              <LogOut className="h-[18px] w-[18px] shrink-0" />
-              <span>Sign out</span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -260,8 +204,8 @@ export default function AdminLayout({
         ))}
       </nav>
 
-      {/* Bottom section: Settings, User */}
-      <BottomSection user={user} router={router} pathname={pathname} logout={logout} />
+      {/* Bottom section: Settings */}
+      <BottomSection router={router} pathname={pathname} />
     </>
   );
 
