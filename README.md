@@ -1,95 +1,241 @@
-# MindForge (StockShiftAI)
+<div align="center">
 
-**Intelligent inventory optimization** — demand forecasting, reorder recommendations, anomaly detection, and multi-warehouse planning, powered by AI and your data.
+<!-- Animated Typing Banner -->
+<a href="https://github.com/veer/StockShift-AI">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Outfit&weight=700&size=38&duration=2500&pause=800&color=059669&center=true&vCenter=true&width=750&height=70&lines=⚡+StockShiftAI;Autonomous+Inventory+Intelligence;Real-Time+POS+Store+Sync;AI+Supply+Chain+%26+Vendor+Parsing" alt="StockShiftAI Animated Header" />
+</a>
 
----
+<p align="center">
+  <b>Enterprise-Grade Autonomous Inventory Intelligence & Real-Time POS Sync Platform</b>
+</p>
 
-## Features (What We're Implementing)
-
-### Core product
-
-- **Landing & auth** — Marketing landing page; login with email/password or Google (Firebase Auth). Admin area is role-protected (`role === "admin"`).
-- **Admin dashboard** — Overview of inventory health, key metrics, and quick links to inventory, finance, and AI tools.
-- **Inventory management** — Full CRUD for items (name, SKU, category, location, cost, sell price, reorder point, quantity). Record **in/out transactions**; quantities update automatically. Data persists in **localStorage** (no backend required for basic use).
-- **Finance** — Revenue, costs, P&L, category breakdown, and forecast series. Served by Next.js API routes from mock/finance data. **AI-style reorder recommendations** (30/60/90 day horizon) from in-app logic using transaction history and a simple seasonal heuristic.
-- **Reports** — Reporting views over inventory and financial data.
-- **Settings** — App/settings configuration.
-
-### AI & optimization (backend + frontend)
-
-- **Demand forecasting** — Per-SKU forecast for the next 14 days (predicted demand, bounds, reorder suggestion, safety stock). Uses **Flask backend + OpenRouter LLM** when backend is configured; can fall back to frontend item data for SKUs not in backend.
-- **Smart reorder recommendations** — Top recommendations across all SKUs (reorder / anomaly / overstock) with urgency and confidence. From backend `/api/insights` (LLM + Firestore or local JSON).
-- **Anomaly detection** — Flags demand spikes, drops, trend reversals, seasonal deviations. Backend `/api/anomalies` returns list + health score.
-- **Natural language Q&A** — Ask questions about inventory in plain language. Backend `/api/chat` answers using current inventory context.
-- **Cost optimization** — Capital locked, overstock/stockout risk cost, holding cost, potential savings, and prioritized recommendations. Backend `/api/cost-optimization`.
-- **Scenario planning** — “What-if” on demand, lead time, and safety-stock modifiers. Backend `/api/scenario-planning` (POST) returns current vs projected metrics per SKU and overall impact.
-- **Warehouse optimization** — Stock imbalance across locations; inter-warehouse **transfer recommendations** with cost/benefit. Backend `/api/warehouse-optimization`.
-
-### Data & infra
-
-- **Backend** — Flask app (Firebase Admin optional). Uses **OpenRouter** (e.g. Gemini) for all AI endpoints. **In-memory cache** (5 min TTL) for insights, anomalies, cost optimization, warehouse optimization, and per-SKU forecast; optional **cache warmup** on server start.
-- **Historical data** — Scripts generate and seed data:
-  - **`backend/generate_data.py`** — Builds `backend/data/inventory_history.json` (3 years, daily data) with seasonality, weekly cycles, trends, and anomaly spikes.
-  - **`backend/seed_firestore.py`** — Seeds Firestore from that JSON (requires `serviceAccountKey.json`). Backend can run without Firestore using the same JSON as fallback.
+<!-- Tech Badges -->
+<p align="center">
+  <a href="#-technology-stack">
+    <img src="https://img.shields.io/badge/Frontend-Next.js_14-000000?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js" />
+    <img src="https://img.shields.io/badge/Language-TypeScript_5-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Database-Supabase_RLS-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+    <img src="https://img.shields.io/badge/Backend-Flask_3-000000?style=for-the-badge&logo=flask&logoColor=white" alt="Flask" />
+    <img src="https://img.shields.io/badge/AI_Engine-OpenRouter_Gemini-7C3AED?style=for-the-badge&logo=openai&logoColor=white" alt="OpenRouter" />
+    <img src="https://img.shields.io/badge/Styling-Tailwind_CSS-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  </a>
+</p>
 
 ---
 
-## How It’s Automated
+</div>
 
-### Frontend (Next.js)
+## 🌟 Feature Showcase
 
-- **Inventory** — Add/update/delete items and add in/out transactions; state is kept in React context and **automatically persisted to localStorage** on every change. Quantity updates from transactions are applied immediately in memory and then saved.
-- **Finance recommendations** — When you request recommendations (e.g. 30/60/90 day), the app **automatically** computes them from current inventory + transaction history using a seasonal heuristic (e.g. December/Q4 multipliers) and returns them via `/api/finance/recommendations`; no manual step.
-- **Finance analytics** — Forecast, P&L, category revenue, and costs are served by Next.js API routes that **automatically** aggregate from the finance/mock data layer.
-
-### Backend (Flask)
-
-- **AI responses** — All AI endpoints (insights, forecast, anomalies, chat, cost optimization, scenario planning, warehouse optimization) are **automated**: the backend builds a context from Firestore or local JSON, sends it to the LLM, parses JSON from the response, and returns it. No manual analysis.
-- **Caching** — Responses for insights, anomalies, cost optimization, warehouse optimization, and per-SKU forecast are **automatically cached** for 5 minutes. Repeat requests within that window are served from cache. Use `?refresh=1` to force a fresh LLM call, or `POST /api/cache/clear` to clear all cache.
-- **Cache warmup** — On server start, a background thread **automatically** hits the main AI endpoints once so the first user load can be fast (optional, in-code).
-- **Fallbacks** — If Firestore is not configured, the backend **automatically** uses `backend/data/inventory_history.json`. If a forecast is requested for a SKU not in backend, the frontend can send item details in the POST body and the backend **automatically** builds a synthetic context for the LLM.
-
-### Data pipeline (manual one-time or as-needed)
-
-- **Generate history** — Run `python backend/generate_data.py` to (re)create `inventory_history.json` with seasonal/weekly/trend/anomaly patterns. Not scheduled; run when you want to refresh or extend data.
-- **Seed Firestore** — Run `python backend/seed_firestore.py` after generating data and after placing `serviceAccountKey.json` in `backend/`. Not scheduled; run when you want to sync generated data to Firestore.
-
-There are **no cron jobs, no background workers, and no CI/CD pipelines** in the repo. Automation is “on request” (user or API call) plus in-memory caching and localStorage persistence.
-
----
-
-## Tech stack
-
-| Layer        | Tech |
-|-------------|------|
-| Frontend    | Next.js 14 (App Router), React 18, TypeScript, Tailwind, shadcn/ui, Motion, Lenis, Recharts |
-| Auth        | Supabase Auth (Custom Email/Password & Google Sign-In) with `profiles` Postgres database sync |
-| Frontend data | localStorage (inventory + transactions); mock data + finance-analytics for finance |
-| Backend     | Flask 3, Flask-CORS, Gunicorn |
-| AI          | OpenRouter (e.g. `google/gemini-2.0-flash-001`) |
-| Backend data| Firebase Firestore (optional) or `backend/data/inventory_history.json` |
-
----
-
-## Quick start
-
-1. **Frontend** — `npm install` then `npm run dev`. Open `/login` then go to `/admin/dashboard`.
-2. **Backend** — `cd backend`, `pip install -r requirements.txt`, set `OPENROUTER_API_KEY` (and optionally `OPENROUTER_MODEL`). Place `serviceAccountKey.json` in `backend/` for Firestore, or rely on `data/inventory_history.json` (run `generate_data.py` if missing). Run `python app.py` (default port 5000; frontend expects `NEXT_PUBLIC_AI_BACKEND_URL=http://localhost:5001` for port 5001).
-3. **Data** — Optional: `python backend/generate_data.py` then `python backend/seed_firestore.py` to populate Firestore.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h3 align="center">🤖 <span style="color:#059669">AI Onboarding Bootstrapper</span></h3>
+      <p>Select your industry (<i>Electronics, FMCG, Pharmacy, Fashion</i>) and company details. In one click, StockShiftAI generates 10–15 realistic starter inventory items with unit costs (INR ₹), sell prices, SKUs, and reorder points.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3 align="center">🏢 <span style="color:#7C3AED">AI Vendor Auto-Discovery</span></h3>
+      <p>Paste raw text from supplier invoices, emails, or WhatsApp chats. AI extracts vendor name, email, phone, lead times, MOQ, and SLA payment terms (e.g., <i>Net 30</i>) into structured fields in 2 seconds.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3 align="center">🛒 <span style="color:#2563EB">Real-Time POS Store Terminal</span></h3>
+      <p>Dedicated cashier checkout UI with instant SKU/barcode search, cart controls, real-time stock deduction, and automatic <b>Low-Stock Warning</b> triggers upon checkout.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3 align="center">🔑 <span style="color:#D97706">Commercial API Key Engine</span></h3>
+      <p>Generate secure <code>sk-pos-*</code> keys from Settings to connect local physical store billing counters and hardware. Every sale updates central inventory in real time.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h3 align="center">📄 <span style="color:#4F46E5">RAG Document Intelligence</span></h3>
+      <p>Upload supplier contracts, invoices, and SOPs. Query your supply chain knowledge base in natural English (e.g., <i>"What are our payment terms with Apex Electronics?"</i>).</p>
+    </td>
+    <td width="50%" valign="top">
+      <h3 align="center">🔮 <span style="color:#0D9488">Predictive Forecasting & Transfers</span></h3>
+      <p>14-day LLM demand forecasting, safety stock calculation ($1.65 \times \sigma \times \sqrt{\text{lead\_time}}$), anomaly spike alerts, and inter-warehouse rebalancing transfer suggestions.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
-## Netlify Deployment & Supabase Custom Domain
+## 🔄 Real-Time System Flow
 
-When deploying to **Netlify**:
-1. **Environment Variables**: Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to Netlify Environment Variables.
-2. **Supabase Auth Redirect URLs**: In Supabase Dashboard → **Authentication** → **URL Configuration**, add your production Netlify URL (e.g. `https://your-app.netlify.app/auth/callback`).
-3. **Google OAuth Redirect URI**: In Google Cloud Console Credentials, add `https://your-app.netlify.app/auth/callback` to Authorized Redirect URIs.
-4. **Custom Domain (Optional)**: If you use a custom domain (e.g. `stockshift.com`), connect a custom subdomain in Supabase (**Project Settings** → **Custom Domains**) to replace `xxxx.supabase.co` with your branded domain name on the Google Sign-in popup.
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#059669', 'primaryTextColor': '#fff', 'primaryBorderColor': '#10B981', 'lineColor': '#34D399', 'secondaryColor': '#7C3AED', 'tertiaryColor': '#2563EB'}}}%%
+sequenceDiagram
+    autonumber
+    actor Cashier as 🏬 Billing Counter / POS Hardware
+    participant NextJS as 💻 Next.js Frontend
+    participant Flask as ⚙️ Flask AI Backend
+    participant Supabase as 🗄️ Supabase Postgres (RLS)
+    participant OpenRouter as 🧠 OpenRouter AI (Gemini)
+
+    Note over Cashier, Supabase: Real-Time POS Sale Flow
+    Cashier->>Flask: POST /api/v1/pos/checkout (Header: x-api-key / Body: SKU + Qty)
+    Flask->>Supabase: Validate API Key in api_keys table
+    Supabase-->>Flask: Key Validated (user_id matched)
+    Flask->>Supabase: Deduct stock in inventory_items & insert into transactions
+    Supabase-->>Flask: Stock updated successfully
+    Flask-->>Cashier: Return 200 OK + Low-Stock Warnings (if stock <= reorder_point)
+
+    Note over NextJS, OpenRouter: AI Bootstrapper & Vendor Extraction Flow
+    NextJS->>Flask: POST /api/ai/onboard-catalog (Industry + Company)
+    Flask->>OpenRouter: Prompt LLM for structured JSON catalog
+    OpenRouter-->>Flask: Returns JSON items array
+    Flask-->>NextJS: Starter catalog ready
+```
 
 ---
 
-## Summary
+## 📈 Real-Time Demand Forecasting & AI Anomaly Spike Detection
 
-MindForge delivers **demand forecasting**, **smart reorder and anomaly alerts**, **cost and warehouse optimization**, and **scenario planning** by automating LLM-based analysis over your inventory data. The frontend automates persistence (localStorage) and in-app recommendations; the backend automates AI answers and response caching. Historical data is generated and seeded via two manual scripts; there is no scheduled batch or worker automation.
+<div align="center">
 
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'xyChart': { 'backgroundColor': '#0B0F17', 'titleColor': '#10B981', 'xAxisLabelColor': '#9CA3AF', 'yAxisLabelColor': '#9CA3AF', 'plotColorPalette': '#059669, #7C3AED, #EF4444' }}}}%%
+xychart-beta
+    title "14-Day Predictive SKU Demand Curve & Anomaly Detection"
+    x-axis ["Day 1", "Day 3", "Day 5", "Day 7 (Spike)", "Day 9", "Day 11", "Day 13", "Day 14"]
+    y-axis "Demand Units" 0 --> 250
+    line [42, 58, 50, 215, 78, 72, 88, 82]
+    bar [40, 55, 48, 210, 75, 70, 85, 80]
+```
+
+<table width="85%">
+  <tr>
+    <td align="center" bgcolor="#064E3B">
+      <h4 style="color:#34D399; margin:4px 0;">⚡ Baseline Demand</h4>
+      <p style="color:#A7F3D0; margin:2px 0; font-size:13px;"><b>45-55 units / day</b> (Normal Trend)</p>
+    </td>
+    <td align="center" bgcolor="#7F1D1D">
+      <h4 style="color:#FCA5A5; margin:4px 0;">🚨 Anomaly Spike Detected</h4>
+      <p style="color:#FECACA; margin:2px 0; font-size:13px;"><b>+320% Demand Surge</b> (Day 7 Alert)</p>
+    </td>
+    <td align="center" bgcolor="#312E81">
+      <h4 style="color:#A5B4FC; margin:4px 0;">🛡️ Automated Reorder Trigger</h4>
+      <p style="color:#C7D2FE; margin:2px 0; font-size:13px;"><b>Safety Stock + 85 units</b></p>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+---
+
+## 🗓️ Development Phases & Milestones
+
+<div align="center">
+
+| Phase | Description | Key Modules | Status |
+|:---:|---|---|:---:|
+| **`Phase 1`** | **Core Architecture & Auth** | Supabase Auth, Profiles Sync, Row-Level Security (RLS) | <img src="https://img.shields.io/badge/Completed-059669?style=flat-square&logo=checkmarx&logoColor=white" /> |
+| **`Phase 2`** | **Admin Workspace & UI** | Responsive Sidebar, Natural Language AI Assistant Widget | <img src="https://img.shields.io/badge/Completed-059669?style=flat-square&logo=checkmarx&logoColor=white" /> |
+| **`Phase 3`** | **AI Onboarding Bootstrapper** | Industry Selection, Starter Catalog Generator, Fallback Presets | <img src="https://img.shields.io/badge/Completed-059669?style=flat-square&logo=checkmarx&logoColor=white" /> |
+| **`Phase 4`** | **AI Vendor Auto-Discovery** | Raw-text LLM Parsing, Vendor Directory & SLA Tracking | <img src="https://img.shields.io/badge/Completed-059669?style=flat-square&logo=checkmarx&logoColor=white" /> |
+| **`Phase 5`** | **POS Terminal & Hardware API** | Web POS Terminal (`/admin/pos-terminal`), API Key Engine (`api_keys` Table) | <img src="https://img.shields.io/badge/Completed-059669?style=flat-square&logo=checkmarx&logoColor=white" /> |
+| **`Phase 6`** | **Optimization & Document RAG** | Cost Optimization, Scenario Planning, Inter-Warehouse Transfers | <img src="https://img.shields.io/badge/Completed-059669?style=flat-square&logo=checkmarx&logoColor=white" /> |
+
+</div>
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend** | <img src="https://img.shields.io/badge/Next.js_14-000000?style=flat&logo=next.js" /> <img src="https://img.shields.io/badge/TypeScript_5-3178C6?style=flat&logo=typescript&logoColor=white" /> | Server & Client Components, React 18, Type Safety |
+| **Styling & UI** | <img src="https://img.shields.io/badge/Tailwind_CSS-38BDF8?style=flat&logo=tailwindcss&logoColor=white" /> <img src="https://img.shields.io/badge/shadcn/ui-000000?style=flat" /> | Modern Dark/Light Design Tokens, Lucide Icons |
+| **Database & Security** | <img src="https://img.shields.io/badge/Supabase_Postgres-3ECF8E?style=flat&logo=supabase&logoColor=white" /> | Row Level Security (RLS), Realtime Events, Auth Triggers |
+| **AI Backend** | <img src="https://img.shields.io/badge/Flask_3-000000?style=flat&logo=flask" /> <img src="https://img.shields.io/badge/Python_3.10-3776AB?style=flat&logo=python&logoColor=white" /> | REST API Services, OpenRouter Client, In-Memory Caching |
+| **AI LLM Models** | <img src="https://img.shields.io/badge/OpenRouter-Gemini_2.0-7C3AED?style=flat" /> | Multi-key Failover, Structured JSON Extraction, RAG Vector Context |
+
+---
+
+## 🚀 Local Quickstart Guide
+
+### 1. Prerequisites
+- **Node.js**: `v18.0+`
+- **Python**: `v3.10+`
+- **Supabase Account** & **OpenRouter API Key**
+
+### 2. Installation
+```bash
+git clone https://github.com/veer/StockShift-AI.git
+cd StockShift-AI
+
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd backend
+pip install -r requirements.txt
+cd ..
+```
+
+### 3. Environment Configuration
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+NEXT_PUBLIC_AI_BACKEND_URL=http://localhost:5001
+
+OPENROUTER_API_KEY=sk-or-v1-your-key
+OPENROUTER_BACKUP_API_KEY=sk-or-v1-backup-key
+```
+
+### 4. Database Initialization
+Execute [`supabase_schema.sql`](file:///Users/veer/Documents/Coding%20projects%20and%20files/inventory-platform/StockShift-AI/supabase_schema.sql) in your **Supabase SQL Editor**:
+- Provisions `profiles`, `inventory_items`, `transactions`, `vendors`, `purchase_orders`, and `api_keys` tables with RLS policies.
+
+### 5. Launch Application
+```bash
+# Terminal 1: Python AI Backend (Port 5001)
+cd backend && python app.py
+
+# Terminal 2: Next.js Frontend (Port 3000)
+npm run dev
+```
+Open **[http://localhost:3000](http://localhost:3000)** in your browser.
+
+---
+
+## 📡 REST API Reference
+
+### 🛒 `POST /api/v1/pos/checkout`
+Process a retail point-of-sale checkout and deduct stock live.
+- **Header**: `x-api-key: sk-pos-...`
+- **Body**:
+```json
+{
+  "items": [
+    { "sku": "ELC-001", "quantity": 2 }
+  ]
+}
+```
+- **Response**:
+```json
+{
+  "success": true,
+  "results": [
+    { "sku": "ELC-001", "name": "Wireless Earbuds", "status": "sold", "quantitySold": 2, "remainingStock": 43 }
+  ],
+  "lowStockAlerts": []
+}
+```
+
+### 🤖 `POST /api/ai/onboard-catalog`
+Generate a starter inventory catalog tailored to business industry.
+- **Body**: `{ "industry": "Electronics & Gadgets", "companyName": "Apex Tech" }`
+
+### 🏢 `POST /api/ai/parse-vendor`
+Extract structured vendor properties from raw invoice/chat text.
+- **Body**: `{ "text": "Raw invoice or vendor email content..." }`
+
+---
+
+## 📄 License
+Distributed under the MIT License. See `LICENSE` for details.
