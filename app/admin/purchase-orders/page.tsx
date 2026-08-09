@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useAuth } from "@/_lib/auth-context";
 import { useInventory } from "@/_lib/inventory-context";
 import { getSupabaseClient } from "@/_lib/supabase/client";
@@ -16,7 +17,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/_components/ui/dialog";
-import { FileText, Plus, Download, Mail, CheckCircle2, Clock, Trash2, Send, Sparkles, Building2 } from "lucide-react";
+import { FileText, Plus, Download, Mail, CheckCircle2, Clock, Trash2, Send, Building2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/_lib/utils";
 import type { PurchaseOrder, Vendor } from "@/_lib/types";
 
@@ -245,39 +246,44 @@ export default function PurchaseOrdersPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-            <FileText className="w-8 h-8 text-emerald-600" />
+          <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+            <FileText className="w-7 h-7 text-emerald-600" />
             Automated Purchase Orders (POs)
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground font-medium mt-1">
             Auto-draft reorder Purchase Orders, manage vendor approvals, and export official PDF orders.
           </p>
         </div>
-        <Button onClick={handleOpenAddModal} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+        <Button onClick={handleOpenAddModal} className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl active:scale-95 transition-all shadow-md shadow-emerald-600/20">
           <Plus className="w-4 h-4 mr-2" /> Draft New Purchase Order
         </Button>
       </div>
 
       {/* Orders List */}
       {loading ? (
-        <div className="p-12 text-center text-muted-foreground text-sm">
+        <div className="p-12 text-center text-muted-foreground text-sm font-medium">
           Loading purchase order database...
         </div>
       ) : purchaseOrders.length === 0 ? (
-        <Card className="border-2 border-dashed border-emerald-500/30 bg-card/60 p-8 text-center shadow-none">
+        <Card className="border-2 border-dashed border-emerald-500/30 p-8 text-center shadow-none">
           <div className="mx-auto flex max-w-md flex-col items-center justify-center space-y-3">
-            <div className="rounded-full bg-emerald-500/10 p-4 text-emerald-600">
+            <div className="rounded-full bg-emerald-500/10 p-4 text-emerald-600 shadow-2xs">
               <FileText className="h-8 w-8" />
             </div>
-            <h3 className="text-xl font-bold text-foreground">No Purchase Orders Created Yet</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-xl font-bold tracking-tight text-foreground">No Purchase Orders Created Yet</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Create your first Purchase Order to streamline stock replenishment and download formal PO PDFs for suppliers.
             </p>
-            <Button onClick={handleOpenAddModal} className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+            <Button onClick={handleOpenAddModal} className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl active:scale-95">
               <Plus className="h-4 w-4 mr-2" /> Draft Purchase Order
             </Button>
           </div>
@@ -457,6 +463,6 @@ export default function PurchaseOrdersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

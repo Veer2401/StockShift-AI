@@ -892,39 +892,293 @@ Return ONLY valid JSON (no markdown):
 # ── AI Onboarding Catalog Generator ──────────────────────────────────────────
 
 _FALLBACK_CATALOGS = {
+    "Food & Restaurant": [
+        {"name": "Fresh Whole Milk (1 Litre Pouch)", "sku": "DRY-001", "category": "Raw Dairy", "quantity": 250, "unitCost": 52, "sellPrice": 66, "reorderPoint": 50, "location": "Cold Storage A"},
+        {"name": "Pasteurized Toned Milk (500ml Pack)", "sku": "DRY-002", "category": "Raw Dairy", "quantity": 300, "unitCost": 26, "sellPrice": 33, "reorderPoint": 60, "location": "Cold Storage A"},
+        {"name": "Fresh Farm Cottage Cheese / Paneer 500g", "sku": "DRY-003", "category": "Raw Dairy", "quantity": 120, "unitCost": 160, "sellPrice": 220, "reorderPoint": 25, "location": "Cold Storage A"},
+        {"name": "Salted Creamery Butter 500g Pack", "sku": "DRY-004", "category": "Raw Dairy", "quantity": 180, "unitCost": 210, "sellPrice": 275, "reorderPoint": 30, "location": "Cold Storage A"},
+        {"name": "Pure Desi Cow Ghee (1 Litre Jar)", "sku": "DRY-005", "category": "Raw Dairy", "quantity": 90, "unitCost": 520, "sellPrice": 680, "reorderPoint": 20, "location": "Main Pantry"},
+        {"name": "Fresh Dairy Whipping Cream 250ml", "sku": "DRY-006", "category": "Raw Dairy", "quantity": 100, "unitCost": 65, "sellPrice": 95, "reorderPoint": 20, "location": "Cold Storage A"},
+        {"name": "Mozzarella Cheese Block (1kg Pack)", "sku": "DRY-007", "category": "Raw Dairy", "quantity": 75, "unitCost": 380, "sellPrice": 520, "reorderPoint": 15, "location": "Cold Storage A"},
+        {"name": "Processed Cheese Slices (200g Pack)", "sku": "DRY-008", "category": "Raw Dairy", "quantity": 140, "unitCost": 110, "sellPrice": 155, "reorderPoint": 30, "location": "Cold Storage A"},
+        {"name": "Plain Fresh Set Curd / Dahi 500g", "sku": "DRY-009", "category": "Raw Dairy", "quantity": 210, "unitCost": 38, "sellPrice": 50, "reorderPoint": 40, "location": "Cold Storage A"},
+        {"name": "Full-Cream Milk Powder (1kg Bag)", "sku": "DRY-010", "category": "Raw Dairy", "quantity": 60, "unitCost": 340, "sellPrice": 440, "reorderPoint": 12, "location": "Main Pantry"},
+        {"name": "Sweetened Condensed Milk 400g Tin", "sku": "DRY-011", "category": "Raw Dairy", "quantity": 85, "unitCost": 90, "sellPrice": 130, "reorderPoint": 15, "location": "Main Pantry"},
+        {"name": "Premium Basmati Biryani Rice 5kg", "sku": "GRN-001", "category": "Grains & Rice", "quantity": 150, "unitCost": 420, "sellPrice": 620, "reorderPoint": 30, "location": "Main Pantry"},
+        {"name": "Organic Whole Wheat Atta 10kg", "sku": "STP-001", "category": "Flour & Staples", "quantity": 110, "unitCost": 350, "sellPrice": 460, "reorderPoint": 20, "location": "Main Pantry"},
+        {"name": "Refined Sunflower Cooking Oil 5L", "sku": "OIL-001", "category": "Oils & Fats", "quantity": 95, "unitCost": 580, "sellPrice": 750, "reorderPoint": 20, "location": "Main Pantry"},
+        {"name": "Cold Pressed Mustard Oil 1L", "sku": "OIL-002", "category": "Oils & Fats", "quantity": 130, "unitCost": 125, "sellPrice": 170, "reorderPoint": 25, "location": "Main Pantry"},
+        {"name": "Unpolished Toor Dal (Pigeon Pea) 2kg", "sku": "PLS-001", "category": "Pulses & Legumes", "quantity": 140, "unitCost": 220, "sellPrice": 310, "reorderPoint": 25, "location": "Main Pantry"},
+        {"name": "Organic Chana Dal (Bengal Gram) 1kg", "sku": "PLS-002", "category": "Pulses & Legumes", "quantity": 160, "unitCost": 80, "sellPrice": 115, "reorderPoint": 30, "location": "Main Pantry"},
+        {"name": "Premium Red Kidney Beans / Rajma 1kg", "sku": "PLS-003", "category": "Pulses & Legumes", "quantity": 125, "unitCost": 110, "sellPrice": 160, "reorderPoint": 20, "location": "Main Pantry"},
+        {"name": "Special Garam Masala Powder 200g", "sku": "SPC-001", "category": "Spices & Seasonings", "quantity": 180, "unitCost": 75, "sellPrice": 120, "reorderPoint": 35, "location": "Main Pantry"},
+        {"name": "Organic Turmeric Powder / Haldi 500g", "sku": "SPC-002", "category": "Spices & Seasonings", "quantity": 190, "unitCost": 90, "sellPrice": 140, "reorderPoint": 35, "location": "Main Pantry"},
+        {"name": "Kashmiri Red Chilli Powder 200g", "sku": "SPC-003", "category": "Spices & Seasonings", "quantity": 175, "unitCost": 85, "sellPrice": 135, "reorderPoint": 30, "location": "Main Pantry"},
+        {"name": "Pure Iodized Table Salt 1kg Pack", "sku": "STP-002", "category": "Flour & Staples", "quantity": 400, "unitCost": 18, "sellPrice": 28, "reorderPoint": 80, "location": "Main Pantry"},
+        {"name": "Refined White Sugar 5kg Bag", "sku": "STP-003", "category": "Flour & Staples", "quantity": 130, "unitCost": 200, "sellPrice": 260, "reorderPoint": 25, "location": "Main Pantry"},
+        {"name": "Raw Assam Black Tea Leaf 500g", "sku": "BEV-001", "category": "Beverages", "quantity": 110, "unitCost": 160, "sellPrice": 240, "reorderPoint": 20, "location": "Main Pantry"},
+        {"name": "Freeze Dried Instant Coffee Powder 200g", "sku": "BEV-002", "category": "Beverages", "quantity": 90, "unitCost": 220, "sellPrice": 340, "reorderPoint": 15, "location": "Main Pantry"},
+        {"name": "Rich Tomato Ketchup Bottle 1kg", "sku": "CND-001", "category": "Condiments", "quantity": 140, "unitCost": 85, "sellPrice": 135, "reorderPoint": 25, "location": "Main Pantry"},
+        {"name": "Spicy Green Chilli Sauce 500ml", "sku": "CND-002", "category": "Condiments", "quantity": 120, "unitCost": 45, "sellPrice": 75, "reorderPoint": 20, "location": "Main Pantry"},
+        {"name": "Authentic Dark Soy Sauce 500ml", "sku": "CND-003", "category": "Condiments", "quantity": 105, "unitCost": 55, "sellPrice": 90, "reorderPoint": 18, "location": "Main Pantry"},
+        {"name": "Pure Wildflower Natural Honey 500g", "sku": "CND-004", "category": "Condiments", "quantity": 85, "unitCost": 180, "sellPrice": 270, "reorderPoint": 15, "location": "Main Pantry"},
+        {"name": "Dry Roasted Jumbo Almonds 500g", "sku": "DFT-001", "category": "Dry Fruits", "quantity": 70, "unitCost": 380, "sellPrice": 560, "reorderPoint": 12, "location": "Main Pantry"}
+    ],
     "Electronics & Gadgets": [
         {"name": "Wireless Noise Cancelling Earbuds", "sku": "ELC-001", "category": "Audio", "quantity": 45, "unitCost": 1800, "sellPrice": 3499, "reorderPoint": 10, "location": "Main Warehouse"},
         {"name": "65W Fast Charging USB-C Adapter", "sku": "ELC-002", "category": "Accessories", "quantity": 120, "unitCost": 450, "sellPrice": 999, "reorderPoint": 25, "location": "Main Warehouse"},
         {"name": "RGB Mechanical Gaming Keyboard", "sku": "ELC-003", "category": "Peripherals", "quantity": 30, "unitCost": 2200, "sellPrice": 4299, "reorderPoint": 8, "location": "Store Front"},
         {"name": "Ultra-Wide 27-inch 4K Monitor", "sku": "ELC-004", "category": "Displays", "quantity": 15, "unitCost": 14500, "sellPrice": 21999, "reorderPoint": 5, "location": "Main Warehouse"},
-        {"name": "10000mAh Slim Power Bank", "sku": "ELC-005", "category": "Accessories", "quantity": 80, "unitCost": 600, "sellPrice": 1299, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "20000mAh Slim Power Bank", "sku": "ELC-005", "category": "Accessories", "quantity": 80, "unitCost": 800, "sellPrice": 1599, "reorderPoint": 15, "location": "Store Front"},
         {"name": "Full HD Web Camera 1080p", "sku": "ELC-006", "category": "Peripherals", "quantity": 50, "unitCost": 950, "sellPrice": 1899, "reorderPoint": 10, "location": "Main Warehouse"},
-        {"name": "Smart Fitness Watch v2", "sku": "ELC-007", "category": "Wearables", "quantity": 60, "unitCost": 1500, "sellPrice": 2999, "reorderPoint": 12, "location": "Store Front"},
-        {"name": "Ergonomic Wireless Mouse", "sku": "ELC-008", "category": "Peripherals", "quantity": 90, "unitCost": 350, "sellPrice": 799, "reorderPoint": 20, "location": "Main Warehouse"}
-    ],
-    "FMCG & Grocery": [
-        {"name": "Basmati Premium Rice 5kg", "sku": "FMC-001", "category": "Staples", "quantity": 150, "unitCost": 320, "sellPrice": 499, "reorderPoint": 30, "location": "Main Warehouse"},
-        {"name": "Refined Sunflower Oil 1L", "sku": "FMC-002", "category": "Oils & Ghee", "quantity": 200, "unitCost": 110, "sellPrice": 145, "reorderPoint": 40, "location": "Store Front"},
-        {"name": "Organic Whole Wheat Atta 10kg", "sku": "FMC-003", "category": "Staples", "quantity": 100, "unitCost": 340, "sellPrice": 450, "reorderPoint": 20, "location": "Main Warehouse"},
-        {"name": "Dark Chocolate Roasted Almond Bar", "sku": "FMC-004", "category": "Snacks", "quantity": 300, "unitCost": 45, "sellPrice": 90, "reorderPoint": 50, "location": "Store Front"},
-        {"name": "Green Tea Honey Lemon 100g", "sku": "FMC-005", "category": "Beverages", "quantity": 80, "unitCost": 130, "sellPrice": 220, "reorderPoint": 15, "location": "Main Warehouse"},
-        {"name": "Antibacterial Hand Wash 500ml", "sku": "FMC-006", "category": "Personal Care", "quantity": 120, "unitCost": 70, "sellPrice": 135, "reorderPoint": 25, "location": "Store Front"}
+        {"name": "Smart Fitness Watch Series 5", "sku": "ELC-007", "category": "Wearables", "quantity": 60, "unitCost": 1500, "sellPrice": 2999, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Ergonomic Wireless Mouse", "sku": "ELC-008", "category": "Peripherals", "quantity": 90, "unitCost": 350, "sellPrice": 799, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "USB-C Multi-Port Hub 7-in-1", "sku": "ELC-009", "category": "Accessories", "quantity": 40, "unitCost": 1100, "sellPrice": 2199, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "Portable Bluetooth Speaker 20W", "sku": "ELC-010", "category": "Audio", "quantity": 35, "unitCost": 1400, "sellPrice": 2799, "reorderPoint": 8, "location": "Store Front"},
+        {"name": "PCIe NVMe M.2 1TB Internal SSD", "sku": "ELC-011", "category": "Components", "quantity": 25, "unitCost": 3800, "sellPrice": 5999, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "16GB DDR4 3200MHz RAM Module", "sku": "ELC-012", "category": "Components", "quantity": 30, "unitCost": 2100, "sellPrice": 3499, "reorderPoint": 8, "location": "Main Warehouse"},
+        {"name": "Wi-Fi 6 Dual-Band Gigabit Router", "sku": "ELC-013", "category": "Networking", "quantity": 20, "unitCost": 1900, "sellPrice": 3299, "reorderPoint": 5, "location": "Store Front"},
+        {"name": "High-Speed Braided HDMI 2.1 Cable 2m", "sku": "ELC-014", "category": "Cables", "quantity": 100, "unitCost": 250, "sellPrice": 599, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "USB Studio Condenser Microphone", "sku": "ELC-015", "category": "Audio", "quantity": 18, "unitCost": 2500, "sellPrice": 4499, "reorderPoint": 4, "location": "Store Front"},
+        {"name": "Smart Home Security Camera 1080p", "sku": "ELC-016", "category": "Smart Home", "quantity": 45, "unitCost": 1200, "sellPrice": 2299, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "15W Fast Qi Wireless Charging Pad", "sku": "ELC-017", "category": "Accessories", "quantity": 65, "unitCost": 400, "sellPrice": 899, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "PBT Custom Mechanical Keycap Set", "sku": "ELC-018", "category": "Peripherals", "quantity": 22, "unitCost": 850, "sellPrice": 1699, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "Foldable Aluminum Laptop Stand", "sku": "ELC-019", "category": "Accessories", "quantity": 55, "unitCost": 650, "sellPrice": 1299, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "In-Ear Active Noise Isolating Earbuds", "sku": "ELC-020", "category": "Audio", "quantity": 70, "unitCost": 750, "sellPrice": 1499, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Digital Graphic Drawing Tablet 10-inch", "sku": "ELC-021", "category": "Peripherals", "quantity": 15, "unitCost": 3200, "sellPrice": 5499, "reorderPoint": 4, "location": "Store Front"},
+        {"name": "2TB USB 3.2 External Hard Drive", "sku": "ELC-022", "category": "Storage", "quantity": 28, "unitCost": 3900, "sellPrice": 5799, "reorderPoint": 6, "location": "Main Warehouse"},
+        {"name": "6-Socket Surge Protector Extension Cord", "sku": "ELC-023", "category": "Power", "quantity": 85, "unitCost": 380, "sellPrice": 799, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Smart RGB LED Light Bulb 12W", "sku": "ELC-024", "category": "Smart Home", "quantity": 110, "unitCost": 300, "sellPrice": 649, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Tempered Anti-Glare Monitor Screen Guard", "sku": "ELC-025", "category": "Accessories", "quantity": 40, "unitCost": 220, "sellPrice": 499, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "Ergonomic Vertical Wireless Mouse", "sku": "ELC-026", "category": "Peripherals", "quantity": 32, "unitCost": 600, "sellPrice": 1299, "reorderPoint": 8, "location": "Store Front"},
+        {"name": "Heavy-Duty Dual Monitor Arm Stand", "sku": "ELC-027", "category": "Accessories", "quantity": 14, "unitCost": 2100, "sellPrice": 3899, "reorderPoint": 3, "location": "Main Warehouse"},
+        {"name": "Heavy-Duty Braided Type-C Cable 2m", "sku": "ELC-028", "category": "Cables", "quantity": 130, "unitCost": 120, "sellPrice": 349, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Intel Core i5 Mini PC Barebone Kit", "sku": "ELC-029", "category": "Computers", "quantity": 10, "unitCost": 18500, "sellPrice": 26999, "reorderPoint": 2, "location": "Main Warehouse"},
+        {"name": "Stereo Desktop Speakers 2.0 10W", "sku": "ELC-030", "category": "Audio", "quantity": 38, "unitCost": 550, "sellPrice": 1199, "reorderPoint": 9, "location": "Store Front"}
     ],
     "Pharmacy & Healthcare": [
         {"name": "Paracetamol 650mg Tablets (Strip of 15)", "sku": "PHM-001", "category": "OTC Medicine", "quantity": 500, "unitCost": 12, "sellPrice": 30, "reorderPoint": 100, "location": "Pharmacy Shelf A"},
         {"name": "Vitamin C + Zinc Chewable (30 Tabs)", "sku": "PHM-002", "category": "Supplements", "quantity": 150, "unitCost": 85, "sellPrice": 175, "reorderPoint": 30, "location": "Pharmacy Shelf B"},
         {"name": "Digital Infrared Thermometer", "sku": "PHM-003", "category": "Devices", "quantity": 40, "unitCost": 650, "sellPrice": 1299, "reorderPoint": 10, "location": "Main Warehouse"},
         {"name": "Automatic Blood Pressure Monitor", "sku": "PHM-004", "category": "Devices", "quantity": 25, "unitCost": 1100, "sellPrice": 1999, "reorderPoint": 5, "location": "Main Warehouse"},
-        {"name": "Antiseptic Liquid 500ml", "sku": "PHM-005", "category": "First Aid", "quantity": 100, "unitCost": 90, "sellPrice": 145, "reorderPoint": 20, "location": "Pharmacy Shelf A"}
+        {"name": "Antiseptic Liquid 500ml", "sku": "PHM-005", "category": "First Aid", "quantity": 100, "unitCost": 90, "sellPrice": 145, "reorderPoint": 20, "location": "Pharmacy Shelf A"},
+        {"name": "Fingertip Pulse Oximeter OLED", "sku": "PHM-006", "category": "Devices", "quantity": 35, "unitCost": 450, "sellPrice": 999, "reorderPoint": 8, "location": "Pharmacy Shelf B"},
+        {"name": "N95 Protective Face Masks (Pack of 10)", "sku": "PHM-007", "category": "Personal Safety", "quantity": 200, "unitCost": 120, "sellPrice": 250, "reorderPoint": 40, "location": "Main Warehouse"},
+        {"name": "Absorbent Surgical Cotton 500g", "sku": "PHM-008", "category": "First Aid", "quantity": 80, "unitCost": 95, "sellPrice": 160, "reorderPoint": 15, "location": "Pharmacy Shelf A"},
+        {"name": "Microporous Medical Tape 1 inch", "sku": "PHM-009", "category": "First Aid", "quantity": 120, "unitCost": 35, "sellPrice": 65, "reorderPoint": 25, "location": "Pharmacy Shelf A"},
+        {"name": "Elastic Bandage Roll 4 inch", "sku": "PHM-010", "category": "First Aid", "quantity": 140, "unitCost": 45, "sellPrice": 85, "reorderPoint": 30, "location": "Pharmacy Shelf A"},
+        {"name": "Oral Rehydration Salts (ORS) 21g Sachet", "sku": "PHM-011", "category": "OTC Medicine", "quantity": 600, "unitCost": 6, "sellPrice": 18, "reorderPoint": 120, "location": "Pharmacy Shelf B"},
+        {"name": "Herbal Cough Syrup Honey Formula 100ml", "sku": "PHM-012", "category": "OTC Medicine", "quantity": 130, "unitCost": 60, "sellPrice": 110, "reorderPoint": 25, "location": "Pharmacy Shelf A"},
+        {"name": "Antacid Chewable Mint Tablets (Strip of 10)", "sku": "PHM-013", "category": "OTC Medicine", "quantity": 300, "unitCost": 15, "sellPrice": 35, "reorderPoint": 50, "location": "Pharmacy Shelf A"},
+        {"name": "Daily Multivitamin Capsules (30 Count)", "sku": "PHM-014", "category": "Supplements", "quantity": 95, "unitCost": 140, "sellPrice": 280, "reorderPoint": 20, "location": "Pharmacy Shelf B"},
+        {"name": "Calcium + Vitamin D3 Tablets (30 Tabs)", "sku": "PHM-015", "category": "Supplements", "quantity": 110, "unitCost": 120, "sellPrice": 240, "reorderPoint": 20, "location": "Pharmacy Shelf B"},
+        {"name": "Antiseptic Skin Cream 30g Tube", "sku": "PHM-016", "category": "First Aid", "quantity": 150, "unitCost": 30, "sellPrice": 60, "reorderPoint": 30, "location": "Pharmacy Shelf A"},
+        {"name": "Instant Hand Sanitizer Gel 500ml", "sku": "PHM-017", "category": "Personal Safety", "quantity": 180, "unitCost": 80, "sellPrice": 150, "reorderPoint": 35, "location": "Main Warehouse"},
+        {"name": "Blood Glucose Test Strips (50 Strips)", "sku": "PHM-018", "category": "Devices", "quantity": 50, "unitCost": 420, "sellPrice": 750, "reorderPoint": 10, "location": "Pharmacy Shelf B"},
+        {"name": "Powdered Latex Gloves (Box of 100)", "sku": "PHM-019", "category": "Personal Safety", "quantity": 90, "unitCost": 220, "sellPrice": 399, "reorderPoint": 18, "location": "Main Warehouse"},
+        {"name": "Hydrogen Peroxide Solution 6% 400ml", "sku": "PHM-020", "category": "First Aid", "quantity": 70, "unitCost": 28, "sellPrice": 55, "reorderPoint": 12, "location": "Pharmacy Shelf A"},
+        {"name": "Fast Pain Relief Spray 100g", "sku": "PHM-021", "category": "OTC Medicine", "quantity": 120, "unitCost": 90, "sellPrice": 165, "reorderPoint": 25, "location": "Pharmacy Shelf A"},
+        {"name": "Lubricating Eye Drops 10ml", "sku": "PHM-022", "category": "OTC Medicine", "quantity": 85, "unitCost": 75, "sellPrice": 140, "reorderPoint": 15, "location": "Pharmacy Shelf A"},
+        {"name": "Digital Flexible Tip Thermometer", "sku": "PHM-023", "category": "Devices", "quantity": 60, "unitCost": 150, "sellPrice": 299, "reorderPoint": 12, "location": "Pharmacy Shelf B"},
+        {"name": "Orthopedic Heating Gel Pad Electric", "sku": "PHM-024", "category": "Devices", "quantity": 25, "unitCost": 480, "sellPrice": 899, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "Soothing Vaporizing Rub 50g Jar", "sku": "PHM-025", "category": "OTC Medicine", "quantity": 160, "unitCost": 50, "sellPrice": 95, "reorderPoint": 30, "location": "Pharmacy Shelf A"},
+        {"name": "Adjustable Medical Face Shield", "sku": "PHM-026", "category": "Personal Safety", "quantity": 110, "unitCost": 40, "sellPrice": 85, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Menthol Throat Lozenges (Box of 20)", "sku": "PHM-027", "category": "OTC Medicine", "quantity": 220, "unitCost": 25, "sellPrice": 55, "reorderPoint": 40, "location": "Pharmacy Shelf A"},
+        {"name": "Antiallergic Cetirizine 10mg (Strip of 10)", "sku": "PHM-028", "category": "OTC Medicine", "quantity": 400, "unitCost": 8, "sellPrice": 22, "reorderPoint": 80, "location": "Pharmacy Shelf A"},
+        {"name": "Comprehensive Emergency First Aid Kit", "sku": "PHM-029", "category": "First Aid", "quantity": 30, "unitCost": 380, "sellPrice": 699, "reorderPoint": 6, "location": "Main Warehouse"},
+        {"name": "Antifungal Clotrimazole Cream 30g", "sku": "PHM-030", "category": "OTC Medicine", "quantity": 130, "unitCost": 35, "sellPrice": 70, "reorderPoint": 25, "location": "Pharmacy Shelf A"}
+    ],
+    "Apparel & Fashion": [
+        {"name": "Men's Slim Fit Stretch Denim Jeans", "sku": "APP-001", "category": "Bottomwear", "quantity": 80, "unitCost": 650, "sellPrice": 1499, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Women's Printed Cotton Kurti", "sku": "APP-002", "category": "Ethnicwear", "quantity": 110, "unitCost": 380, "sellPrice": 899, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Heavyweight Cotton Crewneck T-Shirt", "sku": "APP-003", "category": "Topwear", "quantity": 200, "unitCost": 220, "sellPrice": 599, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Men's Casual Button-Down Shirt", "sku": "APP-004", "category": "Topwear", "quantity": 90, "unitCost": 480, "sellPrice": 1199, "reorderPoint": 18, "location": "Main Warehouse"},
+        {"name": "Fleece Oversized Pullover Hoodie", "sku": "APP-005", "category": "Winterwear", "quantity": 65, "unitCost": 750, "sellPrice": 1799, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Formal Trousers Regular Fit Navy", "sku": "APP-006", "category": "Bottomwear", "quantity": 70, "unitCost": 580, "sellPrice": 1399, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Athletic Quick-Dry Running Shorts", "sku": "APP-007", "category": "Activewear", "quantity": 120, "unitCost": 280, "sellPrice": 699, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Genuine Leather Belt Brown", "sku": "APP-008", "category": "Accessories", "quantity": 150, "unitCost": 180, "sellPrice": 499, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Ankle Length Cotton Socks (3 Pack)", "sku": "APP-009", "category": "Accessories", "quantity": 250, "unitCost": 90, "sellPrice": 249, "reorderPoint": 50, "location": "Store Front"},
+        {"name": "Vintage Wash Denim Trucker Jacket", "sku": "APP-010", "category": "Outerwear", "quantity": 40, "unitCost": 1100, "sellPrice": 2499, "reorderPoint": 8, "location": "Main Warehouse"},
+        {"name": "Women's High-Waist Ankle Leggings", "sku": "APP-011", "category": "Bottomwear", "quantity": 130, "unitCost": 250, "sellPrice": 599, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Unisex Classic Canvas Sneakers", "sku": "APP-012", "category": "Footwear", "quantity": 60, "unitCost": 620, "sellPrice": 1499, "reorderPoint": 12, "location": "Main Warehouse"},
+        {"name": "Men's Formal Oxford Shoes Black", "sku": "APP-013", "category": "Footwear", "quantity": 45, "unitCost": 950, "sellPrice": 2299, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "Insulated Winter Puffer Jacket", "sku": "APP-014", "category": "Winterwear", "quantity": 35, "unitCost": 1400, "sellPrice": 3299, "reorderPoint": 6, "location": "Main Warehouse"},
+        {"name": "Pure Linen Summer Casual Shirt", "sku": "APP-015", "category": "Topwear", "quantity": 55, "unitCost": 680, "sellPrice": 1699, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "Women's High-Support Sports Bra", "sku": "APP-016", "category": "Activewear", "quantity": 95, "unitCost": 320, "sellPrice": 799, "reorderPoint": 18, "location": "Store Front"},
+        {"name": "Stretch Cotton Chino Shorts", "sku": "APP-017", "category": "Bottomwear", "quantity": 85, "unitCost": 390, "sellPrice": 899, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Graphic Printed Streetwear Tee", "sku": "APP-018", "category": "Topwear", "quantity": 180, "unitCost": 240, "sellPrice": 649, "reorderPoint": 35, "location": "Store Front"},
+        {"name": "Slim Leather Bifold Wallet", "sku": "APP-019", "category": "Accessories", "quantity": 110, "unitCost": 210, "sellPrice": 549, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Lightweight Waterproof Windbreaker", "sku": "APP-020", "category": "Outerwear", "quantity": 50, "unitCost": 780, "sellPrice": 1899, "reorderPoint": 10, "location": "Main Warehouse"},
+        {"name": "Tailored Single-Breasted Blazer", "sku": "APP-021", "category": "Formalwear", "quantity": 30, "unitCost": 1850, "sellPrice": 4299, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "Pure Cotton Nightwear Pajama Set", "sku": "APP-022", "category": "Sleepwear", "quantity": 75, "unitCost": 420, "sellPrice": 999, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "Polo Collar Cotton Pique T-Shirt", "sku": "APP-023", "category": "Topwear", "quantity": 140, "unitCost": 350, "sellPrice": 799, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Ribbed Woolen Beanie Cap", "sku": "APP-024", "category": "Accessories", "quantity": 120, "unitCost": 110, "sellPrice": 349, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Polarized Aviator Sunglasses UV400", "sku": "APP-025", "category": "Accessories", "quantity": 90, "unitCost": 280, "sellPrice": 799, "reorderPoint": 18, "location": "Store Front"},
+        {"name": "Formal Silk Patterned Necktie", "sku": "APP-026", "category": "Accessories", "quantity": 80, "unitCost": 160, "sellPrice": 449, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Oversized Streetwear Fleece Hoodie", "sku": "APP-027", "category": "Topwear", "quantity": 70, "unitCost": 820, "sellPrice": 1999, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Slim Fit Cuffed Track Pants", "sku": "APP-028", "category": "Activewear", "quantity": 100, "unitCost": 450, "sellPrice": 1099, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Women's Printed Floral Maxi Dress", "sku": "APP-029", "category": "Dresses", "quantity": 50, "unitCost": 720, "sellPrice": 1799, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "Leather Shoulder Crossbody Bag", "sku": "APP-030", "category": "Accessories", "quantity": 40, "unitCost": 890, "sellPrice": 2199, "reorderPoint": 8, "location": "Main Warehouse"}
+    ],
+    "Hardware & Industrial": [
+        {"name": "18V Cordless Impact Drill Kit", "sku": "HWD-001", "category": "Power Tools", "quantity": 25, "unitCost": 2800, "sellPrice": 4999, "reorderPoint": 5, "location": "Main Warehouse"},
+        {"name": "Stainless Steel Wood Screws M4 (Box of 500)", "sku": "HWD-002", "category": "Fasteners", "quantity": 100, "unitCost": 180, "sellPrice": 399, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Industrial Safety Helmet Yellow", "sku": "HWD-003", "category": "Safety Gear", "quantity": 80, "unitCost": 220, "sellPrice": 499, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Digital Vernier Caliper 150mm Stainless", "sku": "HWD-004", "category": "Measuring", "quantity": 30, "unitCost": 650, "sellPrice": 1399, "reorderPoint": 6, "location": "Store Front"},
+        {"name": "Heavy-Duty Angle Grinder 850W", "sku": "HWD-005", "category": "Power Tools", "quantity": 20, "unitCost": 1600, "sellPrice": 2899, "reorderPoint": 4, "location": "Main Warehouse"},
+        {"name": "Combination Pliers 8-inch Insulated", "sku": "HWD-006", "category": "Hand Tools", "quantity": 90, "unitCost": 190, "sellPrice": 420, "reorderPoint": 18, "location": "Store Front"},
+        {"name": "Adjustable Pipe Wrench 12-inch Heavy Duty", "sku": "HWD-007", "category": "Hand Tools", "quantity": 40, "unitCost": 340, "sellPrice": 750, "reorderPoint": 8, "location": "Main Warehouse"},
+        {"name": "Anti-Skid Cut Resistant Gloves (Pair)", "sku": "HWD-008", "category": "Safety Gear", "quantity": 150, "unitCost": 75, "sellPrice": 160, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Steel Measuring Tape 5m Auto-Lock", "sku": "HWD-009", "category": "Measuring", "quantity": 110, "unitCost": 85, "sellPrice": 199, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Rechargeable LED Work Floodlight 30W", "sku": "HWD-010", "category": "Lighting", "quantity": 35, "unitCost": 750, "sellPrice": 1599, "reorderPoint": 7, "location": "Main Warehouse"},
+        {"name": "Fiberglass Handle Claw Hammer 500g", "sku": "HWD-011", "category": "Hand Tools", "quantity": 65, "unitCost": 210, "sellPrice": 450, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Precision Magnetic Screwdriver Set (32 pc)", "sku": "HWD-012", "category": "Hand Tools", "quantity": 50, "unitCost": 280, "sellPrice": 649, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "Dual-Temp Heat Gun 2000W", "sku": "HWD-013", "category": "Power Tools", "quantity": 18, "unitCost": 1100, "sellPrice": 2199, "reorderPoint": 4, "location": "Main Warehouse"},
+        {"name": "Soldering Iron Station 60W Digital", "sku": "HWD-014", "category": "Electrical", "quantity": 28, "unitCost": 850, "sellPrice": 1799, "reorderPoint": 5, "location": "Store Front"},
+        {"name": "WD-40 Rust Remover & Lubricant 420ml", "sku": "HWD-015", "category": "Chemicals", "quantity": 120, "unitCost": 210, "sellPrice": 380, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Anti-Fog Clear Safety Goggles", "sku": "HWD-016", "category": "Safety Gear", "quantity": 140, "unitCost": 60, "sellPrice": 140, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Heavy Duty Nylon Cable Ties 300mm (Pack of 100)", "sku": "HWD-017", "category": "Supplies", "quantity": 200, "unitCost": 65, "sellPrice": 150, "reorderPoint": 40, "location": "Main Warehouse"},
+        {"name": "Hydraulic Bottle Jack 5 Ton Capacity", "sku": "HWD-018", "category": "Equipment", "quantity": 15, "unitCost": 1250, "sellPrice": 2499, "reorderPoint": 3, "location": "Main Warehouse"},
+        {"name": "Heavy Duty Utility Cutter Knife", "sku": "HWD-019", "category": "Hand Tools", "quantity": 130, "unitCost": 45, "sellPrice": 110, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Aluminum Spirit Level 24-inch Magnetic", "sku": "HWD-020", "category": "Measuring", "quantity": 45, "unitCost": 320, "sellPrice": 699, "reorderPoint": 9, "location": "Main Warehouse"},
+        {"name": "Automatic Wire Stripper & Crimper", "sku": "HWD-021", "category": "Electrical", "quantity": 55, "unitCost": 290, "sellPrice": 649, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "Heavy Duty Cantilever Steel Tool Box", "sku": "HWD-022", "category": "Storage", "quantity": 22, "unitCost": 980, "sellPrice": 1999, "reorderPoint": 4, "location": "Main Warehouse"},
+        {"name": "Ratchet Socket Wrench Set 40-Piece", "sku": "HWD-023", "category": "Hand Tools", "quantity": 30, "unitCost": 850, "sellPrice": 1799, "reorderPoint": 6, "location": "Store Front"},
+        {"name": "PVC Flame Retardant Insulation Tape 10m", "sku": "HWD-024", "category": "Electrical", "quantity": 350, "unitCost": 15, "sellPrice": 35, "reorderPoint": 70, "location": "Store Front"},
+        {"name": "Solid Brass Security Padlock 50mm", "sku": "HWD-025", "category": "Hardware", "quantity": 75, "unitCost": 180, "sellPrice": 399, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "Hex Allen Key Wrench Set Metric (9 pc)", "sku": "HWD-026", "category": "Hand Tools", "quantity": 85, "unitCost": 140, "sellPrice": 320, "reorderPoint": 18, "location": "Store Front"},
+        {"name": "Malleable Cast Iron C-Clamp 6-inch", "sku": "HWD-027", "category": "Hardware", "quantity": 40, "unitCost": 240, "sellPrice": 520, "reorderPoint": 8, "location": "Main Warehouse"},
+        {"name": "Industrial Dual Filter Respirator Mask", "sku": "HWD-028", "category": "Safety Gear", "quantity": 30, "unitCost": 480, "sellPrice": 999, "reorderPoint": 6, "location": "Main Warehouse"},
+        {"name": "Silicon Carbide Sandpaper Sheets Assorted (Pack of 10)", "sku": "HWD-029", "category": "Supplies", "quantity": 160, "unitCost": 50, "sellPrice": 120, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Epoxy Steel Weld Compound 50g", "sku": "HWD-030", "category": "Chemicals", "quantity": 110, "unitCost": 85, "sellPrice": 180, "reorderPoint": 20, "location": "Store Front"}
+    ],
+    "FMCG & Grocery": [
+        {"name": "Fresh Whole Milk 1 Litre Pouch", "sku": "FMC-001", "category": "Dairy", "quantity": 200, "unitCost": 52, "sellPrice": 66, "reorderPoint": 40, "location": "Cold Storage A"},
+        {"name": "Fresh Cottage Cheese Paneer 200g", "sku": "FMC-002", "category": "Dairy", "quantity": 100, "unitCost": 75, "sellPrice": 105, "reorderPoint": 20, "location": "Cold Storage A"},
+        {"name": "Salted Dairy Butter 500g", "sku": "FMC-003", "category": "Dairy", "quantity": 120, "unitCost": 210, "sellPrice": 275, "reorderPoint": 25, "location": "Cold Storage A"},
+        {"name": "Basmati Premium Rice 5kg", "sku": "FMC-004", "category": "Staples", "quantity": 150, "unitCost": 320, "sellPrice": 499, "reorderPoint": 30, "location": "Main Warehouse"},
+        {"name": "Refined Sunflower Oil 1L", "sku": "FMC-005", "category": "Oils & Ghee", "quantity": 200, "unitCost": 110, "sellPrice": 145, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Organic Whole Wheat Atta 10kg", "sku": "FMC-006", "category": "Staples", "quantity": 100, "unitCost": 340, "sellPrice": 450, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Dark Chocolate Roasted Almond Bar", "sku": "FMC-007", "category": "Snacks", "quantity": 300, "unitCost": 45, "sellPrice": 90, "reorderPoint": 50, "location": "Store Front"},
+        {"name": "Green Tea Honey Lemon 100g", "sku": "FMC-008", "category": "Beverages", "quantity": 80, "unitCost": 130, "sellPrice": 220, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Antibacterial Hand Wash 500ml", "sku": "FMC-009", "category": "Personal Care", "quantity": 120, "unitCost": 70, "sellPrice": 135, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Pure Desi Cow Ghee 1L Jar", "sku": "FMC-010", "category": "Dairy", "quantity": 80, "unitCost": 520, "sellPrice": 680, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Instant Noodles Masala (Pack of 12)", "sku": "FMC-011", "category": "Snacks", "quantity": 250, "unitCost": 120, "sellPrice": 168, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Crispy Potato Chips Salted 100g", "sku": "FMC-012", "category": "Snacks", "quantity": 350, "unitCost": 22, "sellPrice": 40, "reorderPoint": 60, "location": "Store Front"},
+        {"name": "Sparkling Carbonated Soda 1.5L", "sku": "FMC-013", "category": "Beverages", "quantity": 180, "unitCost": 45, "sellPrice": 75, "reorderPoint": 30, "location": "Main Warehouse"},
+        {"name": "Natural Orange Juice 1L Carton", "sku": "FMC-014", "category": "Beverages", "quantity": 90, "unitCost": 85, "sellPrice": 130, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Moisturizing Bathing Soap (Pack of 4)", "sku": "FMC-015", "category": "Personal Care", "quantity": 220, "unitCost": 90, "sellPrice": 140, "reorderPoint": 35, "location": "Main Warehouse"},
+        {"name": "Anti-Dandruff Shampoo 340ml", "sku": "FMC-016", "category": "Personal Care", "quantity": 110, "unitCost": 160, "sellPrice": 245, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Herbal Toothpaste 200g Twin Pack", "sku": "FMC-017", "category": "Personal Care", "quantity": 160, "unitCost": 80, "sellPrice": 130, "reorderPoint": 25, "location": "Main Warehouse"},
+        {"name": "Detergent Washing Powder 2kg", "sku": "FMC-018", "category": "Household", "quantity": 130, "unitCost": 180, "sellPrice": 270, "reorderPoint": 25, "location": "Main Warehouse"},
+        {"name": "Dishwash Liquid Gel 500ml Bottle", "sku": "FMC-019", "category": "Household", "quantity": 170, "unitCost": 65, "sellPrice": 110, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Surface Floor Cleaner Citrus 1L", "sku": "FMC-020", "category": "Household", "quantity": 140, "unitCost": 95, "sellPrice": 155, "reorderPoint": 25, "location": "Main Warehouse"},
+        {"name": "Multi-Purpose Tissue Paper Rolls (Pack of 4)", "sku": "FMC-021", "category": "Household", "quantity": 190, "unitCost": 75, "sellPrice": 125, "reorderPoint": 35, "location": "Store Front"},
+        {"name": "Roasted Salted Cashew Nuts 250g", "sku": "FMC-022", "category": "Dry Fruits", "quantity": 85, "unitCost": 220, "sellPrice": 340, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "California Walnuts Kernels 250g", "sku": "FMC-023", "category": "Dry Fruits", "quantity": 70, "unitCost": 260, "sellPrice": 390, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Whole Spices Garam Masala 100g", "sku": "FMC-024", "category": "Spices", "quantity": 210, "unitCost": 45, "sellPrice": 75, "reorderPoint": 40, "location": "Main Warehouse"},
+        {"name": "Organic Red Chilli Powder 200g", "sku": "FMC-025", "category": "Spices", "quantity": 230, "unitCost": 40, "sellPrice": 68, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Coriander Powder Dhania 200g", "sku": "FMC-026", "category": "Spices", "quantity": 200, "unitCost": 35, "sellPrice": 58, "reorderPoint": 35, "location": "Main Warehouse"},
+        {"name": "Cumin Seeds Jeera 200g", "sku": "FMC-027", "category": "Spices", "quantity": 180, "unitCost": 60, "sellPrice": 95, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Whole Moong Dal Split 1kg", "sku": "FMC-028", "category": "Pulses", "quantity": 120, "unitCost": 90, "sellPrice": 135, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Kala Chana Black Chickpeas 1kg", "sku": "FMC-029", "category": "Pulses", "quantity": 110, "unitCost": 75, "sellPrice": 115, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Pure Jaggery Powder 500g", "sku": "FMC-030", "category": "Staples", "quantity": 150, "unitCost": 40, "sellPrice": 65, "reorderPoint": 25, "location": "Main Warehouse"}
+    ],
+    "Manufacturing": [
+        {"name": "Aluminum Alloy Sheet 2mm (4x8 ft)", "sku": "MFG-001", "category": "Raw Metals", "quantity": 40, "unitCost": 2200, "sellPrice": 3800, "reorderPoint": 8, "location": "Raw Material Yard"},
+        {"name": "Cold Rolled Steel Coil 1.5mm", "sku": "MFG-002", "category": "Raw Metals", "quantity": 25, "unitCost": 4500, "sellPrice": 7200, "reorderPoint": 5, "location": "Raw Material Yard"},
+        {"name": "Stainless Steel Round Rod 25mm Dia", "sku": "MFG-003", "category": "Raw Metals", "quantity": 60, "unitCost": 850, "sellPrice": 1499, "reorderPoint": 12, "location": "Raw Material Yard"},
+        {"name": "Brass Round Bar 12mm Dia (3m)", "sku": "MFG-004", "category": "Raw Metals", "quantity": 50, "unitCost": 1100, "sellPrice": 1899, "reorderPoint": 10, "location": "Raw Material Yard"},
+        {"name": "High-Density Polyethylene (HDPE) Granules 25kg", "sku": "MFG-005", "category": "Polymers", "quantity": 100, "unitCost": 1800, "sellPrice": 2799, "reorderPoint": 20, "location": "Main Warehouse"},
+        {"name": "Polypropylene Resin Pellets 25kg Bag", "sku": "MFG-006", "category": "Polymers", "quantity": 120, "unitCost": 1600, "sellPrice": 2499, "reorderPoint": 25, "location": "Main Warehouse"},
+        {"name": "Industrial NBR Rubber Gasket Sheet 3mm", "sku": "MFG-007", "category": "Seals & Gaskets", "quantity": 75, "unitCost": 350, "sellPrice": 699, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Carbon Steel Seamless Pipe 2-inch", "sku": "MFG-008", "category": "Pipes & Fittings", "quantity": 45, "unitCost": 920, "sellPrice": 1600, "reorderPoint": 10, "location": "Raw Material Yard"},
+        {"name": "Heavy Machine Lubricant Oil 20L Drum", "sku": "MFG-009", "category": "Consumables", "quantity": 30, "unitCost": 2800, "sellPrice": 4200, "reorderPoint": 6, "location": "Chemical Store"},
+        {"name": "Hydraulic Fluid ISO VG 68 20L", "sku": "MFG-010", "category": "Consumables", "quantity": 28, "unitCost": 3100, "sellPrice": 4600, "reorderPoint": 5, "location": "Chemical Store"},
+        {"name": "Hex Flange Bolts M8x30 (Box of 200)", "sku": "MFG-011", "category": "Fasteners", "quantity": 150, "unitCost": 280, "sellPrice": 550, "reorderPoint": 30, "location": "Hardware Bin A"},
+        {"name": "Solid Nylon Engineering Rod White 50mm", "sku": "MFG-012", "category": "Plastics", "quantity": 35, "unitCost": 1250, "sellPrice": 2100, "reorderPoint": 7, "location": "Raw Material Yard"},
+        {"name": "Enamelled Copper Wire Spool 1.5 sq mm", "sku": "MFG-013", "category": "Electrical Raw", "quantity": 80, "unitCost": 650, "sellPrice": 1150, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Arc Welding Electrodes E6013 3.2mm (5kg)", "sku": "MFG-014", "category": "Consumables", "quantity": 60, "unitCost": 420, "sellPrice": 750, "reorderPoint": 12, "location": "Main Warehouse"},
+        {"name": "Industrial Metal Surface Primer Paint 1L", "sku": "MFG-015", "category": "Chemicals", "quantity": 90, "unitCost": 240, "sellPrice": 450, "reorderPoint": 18, "location": "Chemical Store"},
+        {"name": "Deep Groove Ball Bearing 6205-2RS", "sku": "MFG-016", "category": "Components", "quantity": 110, "unitCost": 140, "sellPrice": 290, "reorderPoint": 25, "location": "Hardware Bin B"},
+        {"name": "High-Temp Silicone Sealant Clear 300ml", "sku": "MFG-017", "category": "Adhesives", "quantity": 130, "unitCost": 180, "sellPrice": 350, "reorderPoint": 25, "location": "Chemical Store"},
+        {"name": "Zirconia Sanding Belt 80 Grit (Pack of 5)", "sku": "MFG-018", "category": "Abrasives", "quantity": 85, "unitCost": 220, "sellPrice": 480, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Metal Cutting Disc 4-inch (Pack of 25)", "sku": "MFG-019", "category": "Abrasives", "quantity": 70, "unitCost": 350, "sellPrice": 699, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Medium Strength Threadlocker Blue 50ml", "sku": "MFG-020", "category": "Adhesives", "quantity": 65, "unitCost": 380, "sellPrice": 750, "reorderPoint": 12, "location": "Chemical Store"},
+        {"name": "Pneumatic Reinforced Air Hose 10m", "sku": "MFG-021", "category": "Pneumatics", "quantity": 40, "unitCost": 450, "sellPrice": 899, "reorderPoint": 8, "location": "Main Warehouse"},
+        {"name": "Directional Control Solenoid Valve 24V DC", "sku": "MFG-022", "category": "Automation", "quantity": 25, "unitCost": 1150, "sellPrice": 2200, "reorderPoint": 5, "location": "Electronics Bin C"},
+        {"name": "Induction Hardened Linear Motion Shaft 20mm", "sku": "MFG-023", "category": "Automation", "quantity": 30, "unitCost": 780, "sellPrice": 1499, "reorderPoint": 6, "location": "Raw Material Yard"},
+        {"name": "Inductive Proximity Sensor Switch NPN", "sku": "MFG-024", "category": "Sensors", "quantity": 50, "unitCost": 320, "sellPrice": 650, "reorderPoint": 10, "location": "Electronics Bin C"},
+        {"name": "High Torque Stepper Motor NEMA 23", "sku": "MFG-025", "category": "Motors", "quantity": 20, "unitCost": 1450, "sellPrice": 2699, "reorderPoint": 4, "location": "Electronics Bin C"},
+        {"name": "Heavy Duty Industrial Cooling Fan 120mm", "sku": "MFG-026", "category": "Electrical", "quantity": 60, "unitCost": 280, "sellPrice": 599, "reorderPoint": 12, "location": "Main Warehouse"},
+        {"name": "High Thermal Conductivity Grease 100g", "sku": "MFG-027", "category": "Chemicals", "quantity": 45, "unitCost": 190, "sellPrice": 420, "reorderPoint": 8, "location": "Chemical Store"},
+        {"name": "Woven Stainless Steel Wire Mesh 40 Mesh", "sku": "MFG-028", "category": "Filters & Mesh", "quantity": 35, "unitCost": 620, "sellPrice": 1200, "reorderPoint": 7, "location": "Main Warehouse"},
+        {"name": "Polyurethane Swivel Caster Wheel 4-inch", "sku": "MFG-029", "category": "Hardware", "quantity": 80, "unitCost": 180, "sellPrice": 399, "reorderPoint": 15, "location": "Hardware Bin A"},
+        {"name": "Cast Iron Base Plate 10mm Machined", "sku": "MFG-030", "category": "Raw Metals", "quantity": 22, "unitCost": 1600, "sellPrice": 2800, "reorderPoint": 4, "location": "Raw Material Yard"}
+    ],
+    "General Retail": [
+        {"name": "Matte Finish Ceramic Coffee Mug 350ml", "sku": "GEN-001", "category": "Home & Kitchen", "quantity": 120, "unitCost": 85, "sellPrice": 249, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Insulated Stainless Steel Water Bottle 1L", "sku": "GEN-002", "category": "Home & Kitchen", "quantity": 90, "unitCost": 280, "sellPrice": 699, "reorderPoint": 18, "location": "Store Front"},
+        {"name": "Desktop Mesh Office Desk Organizer", "sku": "GEN-003", "category": "Stationery", "quantity": 70, "unitCost": 190, "sellPrice": 499, "reorderPoint": 15, "location": "Main Warehouse"},
+        {"name": "Adjustable LED Eye-Care Desk Lamp", "sku": "GEN-004", "category": "Electronics", "quantity": 45, "unitCost": 450, "sellPrice": 999, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "A5 Hardcover Executive Notebook", "sku": "GEN-005", "category": "Stationery", "quantity": 160, "unitCost": 90, "sellPrice": 249, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Gel Ink Ballpoint Pens Black (Pack of 10)", "sku": "GEN-006", "category": "Stationery", "quantity": 220, "unitCost": 60, "sellPrice": 149, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Wireless Presenter Pointer Remote", "sku": "GEN-007", "category": "Electronics", "quantity": 30, "unitCost": 350, "sellPrice": 899, "reorderPoint": 6, "location": "Main Warehouse"},
+        {"name": "Bluetooth Smart Key Finder Tracker", "sku": "GEN-008", "category": "Gadgets", "quantity": 55, "unitCost": 380, "sellPrice": 899, "reorderPoint": 12, "location": "Store Front"},
+        {"name": "Microfiber Cleaning Towels (Pack of 4)", "sku": "GEN-009", "category": "Cleaning", "quantity": 180, "unitCost": 75, "sellPrice": 199, "reorderPoint": 35, "location": "Main Warehouse"},
+        {"name": "Silent Quartz Wall Clock 12-inch", "sku": "GEN-010", "category": "Home Decor", "quantity": 40, "unitCost": 220, "sellPrice": 599, "reorderPoint": 8, "location": "Store Front"},
+        {"name": "Reusable Heavy-Duty Cotton Tote Bag", "sku": "GEN-011", "category": "Lifestyle", "quantity": 140, "unitCost": 65, "sellPrice": 179, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Multi-Purpose Stainless Steel Scissors 8-inch", "sku": "GEN-012", "category": "Stationery", "quantity": 110, "unitCost": 45, "sellPrice": 129, "reorderPoint": 20, "location": "Store Front"},
+        {"name": "Self-Adhesive Sticky Notes Pads Assorted", "sku": "GEN-013", "category": "Stationery", "quantity": 250, "unitCost": 30, "sellPrice": 79, "reorderPoint": 50, "location": "Store Front"},
+        {"name": "Foldable Fabric Closet Storage Bin", "sku": "GEN-014", "category": "Home Organization", "quantity": 65, "unitCost": 160, "sellPrice": 399, "reorderPoint": 12, "location": "Main Warehouse"},
+        {"name": "Waterproof PU Leather Desk Mat", "sku": "GEN-015", "category": "Office", "quantity": 50, "unitCost": 240, "sellPrice": 599, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "Windproof Automatic Travel Umbrella", "sku": "GEN-016", "category": "Lifestyle", "quantity": 75, "unitCost": 210, "sellPrice": 499, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "Leakproof Bento Lunch Box 3-Grid", "sku": "GEN-017", "category": "Home & Kitchen", "quantity": 80, "unitCost": 180, "sellPrice": 449, "reorderPoint": 15, "location": "Store Front"},
+        {"name": "Heavy Metal Non-Skid Bookends (Pair)", "sku": "GEN-018", "category": "Office", "quantity": 35, "unitCost": 140, "sellPrice": 349, "reorderPoint": 7, "location": "Main Warehouse"},
+        {"name": "Metallic Mechanical Pencils 0.7mm Set", "sku": "GEN-019", "category": "Stationery", "quantity": 130, "unitCost": 50, "sellPrice": 129, "reorderPoint": 25, "location": "Store Front"},
+        {"name": "Expanding File Folder Organizer 13-Pocket", "sku": "GEN-020", "category": "Stationery", "quantity": 60, "unitCost": 130, "sellPrice": 329, "reorderPoint": 12, "location": "Main Warehouse"},
+        {"name": "Tabletop Digital Alarm Clock & Temperature", "sku": "GEN-021", "category": "Electronics", "quantity": 55, "unitCost": 190, "sellPrice": 499, "reorderPoint": 10, "location": "Store Front"},
+        {"name": "Handmade Leather Keychain Ring Holder", "sku": "GEN-022", "category": "Lifestyle", "quantity": 150, "unitCost": 40, "sellPrice": 149, "reorderPoint": 30, "location": "Store Front"},
+        {"name": "Neoprene Water Bottle Sleeve Carrier", "sku": "GEN-023", "category": "Lifestyle", "quantity": 95, "unitCost": 45, "sellPrice": 129, "reorderPoint": 18, "location": "Store Front"},
+        {"name": "Silicone Cable Management Clips (10 Pack)", "sku": "GEN-024", "category": "Gadgets", "quantity": 200, "unitCost": 35, "sellPrice": 99, "reorderPoint": 40, "location": "Store Front"},
+        {"name": "Vacuum Stainless Flask 500ml", "sku": "GEN-025", "category": "Home & Kitchen", "quantity": 70, "unitCost": 220, "sellPrice": 549, "reorderPoint": 14, "location": "Main Warehouse"},
+        {"name": "Stainless Steel Pocket Multi-Tool", "sku": "GEN-026", "category": "Gadgets", "quantity": 40, "unitCost": 210, "sellPrice": 499, "reorderPoint": 8, "location": "Store Front"},
+        {"name": "Flexible Neoprene Cable Management Sleeve 1.5m", "sku": "GEN-027", "category": "Office", "quantity": 65, "unitCost": 80, "sellPrice": 199, "reorderPoint": 12, "location": "Main Warehouse"},
+        {"name": "Magnetic Leather Bookmark Set (Pack of 3)", "sku": "GEN-028", "category": "Stationery", "quantity": 170, "unitCost": 35, "sellPrice": 99, "reorderPoint": 35, "location": "Store Front"},
+        {"name": "Foldable Universal Smartphone Stand", "sku": "GEN-029", "category": "Gadgets", "quantity": 180, "unitCost": 40, "sellPrice": 119, "reorderPoint": 35, "location": "Store Front"},
+        {"name": "Multi-Purpose Acrylic Storage Organizer Box", "sku": "GEN-030", "category": "Home Organization", "quantity": 50, "unitCost": 150, "sellPrice": 379, "reorderPoint": 10, "location": "Main Warehouse"}
     ]
 }
 
-_DEFAULT_CATALOG = [
-    {"name": "Standard Product A", "sku": "GEN-001", "category": "General", "quantity": 50, "unitCost": 250, "sellPrice": 499, "reorderPoint": 10, "location": "Main Warehouse"},
-    {"name": "Premium Product B", "sku": "GEN-002", "category": "General", "quantity": 30, "unitCost": 750, "sellPrice": 1299, "reorderPoint": 8, "location": "Main Warehouse"},
-    {"name": "Compact Product C", "sku": "GEN-003", "category": "General", "quantity": 100, "unitCost": 90, "sellPrice": 199, "reorderPoint": 20, "location": "Store Front"},
-    {"name": "Deluxe Product D", "sku": "GEN-004", "category": "Premium", "quantity": 20, "unitCost": 1500, "sellPrice": 2999, "reorderPoint": 5, "location": "Main Warehouse"}
-]
+_DEFAULT_CATALOG = _FALLBACK_CATALOGS["Food & Restaurant"]
+
+
+def _get_industry_fallback(industry_name: str):
+    if not industry_name:
+        return _FALLBACK_CATALOGS["General Retail"]
+
+    ind_lower = industry_name.lower()
+
+    for key, items in _FALLBACK_CATALOGS.items():
+        if key.lower() in ind_lower or ind_lower in key.lower():
+            return items
+
+    if "electronic" in ind_lower:
+        return _FALLBACK_CATALOGS["Electronics & Gadgets"]
+    if "food" in ind_lower or "restaurant" in ind_lower:
+        return _FALLBACK_CATALOGS["Food & Restaurant"]
+    if "pharm" in ind_lower or "health" in ind_lower:
+        return _FALLBACK_CATALOGS["Pharmacy & Healthcare"]
+    if "apparel" in ind_lower or "fashion" in ind_lower:
+        return _FALLBACK_CATALOGS["Apparel & Fashion"]
+    if "hardw" in ind_lower or "tool" in ind_lower:
+        return _FALLBACK_CATALOGS["Hardware & Industrial"]
+    if "fmcg" in ind_lower or "groc" in ind_lower:
+        return _FALLBACK_CATALOGS["FMCG & Grocery"]
+    if "manuf" in ind_lower or "factory" in ind_lower:
+        return _FALLBACK_CATALOGS["Manufacturing"]
+
+    return _FALLBACK_CATALOGS["General Retail"]
 
 
 @app.route("/api/ai/onboard-catalog", methods=["POST"])
@@ -934,19 +1188,29 @@ def ai_onboard_catalog():
     industry = body.get("industry", "General Retail")
     company_name = body.get("companyName", "My Business")
 
-    system = """You are StockShiftAI, an inventory setup assistant.
-Generate a realistic starter catalog of 8-10 inventory items for a business.
-Return ONLY valid JSON in this format:
-{"items": [{"name": "Item Name", "sku": "SKU-001", "category": "Category", "quantity": 50, "unitCost": 200, "sellPrice": 400, "reorderPoint": 10, "location": "Main Warehouse"}]}
-Prices in INR (₹). Do NOT include markdown code fences or explanatory text."""
+    system = """You are StockShiftAI, an expert inventory setup assistant.
+Generate a realistic starter catalog of EXACTLY 30 real, authentic inventory products for a business.
+DO NOT use placeholder names like "Product A", "Compact item", or generic placeholders.
+For Food & Restaurant: Include real raw dairy products (Milk, Paneer, Butter, Ghee, Curd, Cream, Cheese), grains, pulses, spices.
+For Electronics: Include real specific gadget names (Headphones, Chargers, Keyboards, Monitors, Powerbanks, Cables, SSDs, Mice, Webcams).
+For Pharmacy: Include real medicines (Paracetamol, Thermometer, BP Monitor, Antibacterial, Bandages, Vitamin C).
+For Apparel: Include real clothing (Jeans, Shirts, T-Shirts, Hoodies, Shoes, Belts, Jackets).
+For Hardware: Include real tools (Drill, Screws, Pliers, Wrench, Safety Helmet, Angle Grinder).
+For Manufacturing: Include real raw materials (Aluminum Sheet, Steel Rod, HDPE Granules, Bolts, Lubricants).
+CRITICAL SKU RULE: SKU codes MUST be derived from the product sector/category prefix (e.g. for Raw Dairy use "DRY-001", for Grains & Rice use "GRN-001", for Flour & Staples use "STP-001", for Oils use "OIL-001", for Pulses use "PLS-001", for Spices use "SPC-001", for Beverages use "BEV-001", for Condiments use "CND-001", for Dry Fruits use "DFT-001") and NOT from the individual product name.
+Each product MUST have realistic names, category, unitCost in INR ₹, sellPrice in INR ₹, quantity (30-300), reorderPoint (10-50), location, and sector-based SKU.
 
-    user_prompt = f"Generate 8 inventory items for Company: {company_name}, Industry: {industry}."
+Return ONLY valid JSON in this exact structure:
+{"items": [{"name": "Specific Real Product Name", "sku": "DRY-001", "category": "Raw Dairy", "quantity": 100, "unitCost": 52, "sellPrice": 66, "reorderPoint": 50, "location": "Cold Storage A"}]}
+Do NOT include markdown fences, code blocks, or explanatory text."""
 
-    raw = call_llm(system, user_prompt, max_tokens=2500)
+    user_prompt = f"Generate 30 highly specific, authentic real products for Company: '{company_name}', Industry: '{industry}'."
+
+    raw = call_llm(system, user_prompt, max_tokens=4000)
 
     if raw:
         parsed = _extract_json(raw)
-        if parsed and "items" in parsed and isinstance(parsed["items"], list) and len(parsed["items"]) > 0:
+        if parsed and "items" in parsed and isinstance(parsed["items"], list) and len(parsed["items"]) >= 10:
             return jsonify(parsed)
 
         # Try parsing array directly
@@ -960,14 +1224,14 @@ Prices in INR (₹). Do NOT include markdown code fences or explanatory text."""
                     cleaned = cleaned.rsplit("```", 1)[0]
                 cleaned = cleaned.strip()
             arr = json.loads(cleaned)
-            if isinstance(arr, list) and len(arr) > 0:
+            if isinstance(arr, list) and len(arr) >= 10:
                 return jsonify({"items": arr})
         except json.JSONDecodeError:
             pass
 
-    # High-quality fallback catalog matching industry
-    fallback = _FALLBACK_CATALOGS.get(industry, _DEFAULT_CATALOG)
-    print(f"ℹ️ Returning starter catalog fallback for industry: {industry}")
+    # High-quality fallback catalog matching industry with 30 real items
+    fallback = _get_industry_fallback(industry)
+    print(f"ℹ️ Returning starter catalog fallback (30 items) for industry: {industry}")
     return jsonify({"items": fallback})
 
 

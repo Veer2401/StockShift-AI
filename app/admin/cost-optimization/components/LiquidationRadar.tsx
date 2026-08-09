@@ -5,7 +5,7 @@ import { useInventory } from "@/_lib/inventory-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
 import { Badge } from "@/_components/ui/badge";
 import { Button } from "@/_components/ui/button";
-import { ShieldAlert, Flame, TrendingDown, ArrowRight, AlertOctagon, Sparkles } from "lucide-react";
+import { ShieldAlert, Flame, TrendingDown, ArrowRight, AlertOctagon } from "lucide-react";
 import { formatCurrency } from "@/_lib/utils";
 
 export function LiquidationRadar() {

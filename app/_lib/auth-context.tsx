@@ -58,6 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (profile) {
+        const isComplete = Boolean(
+          profile.onboarding_completed ||
+            (profile.company_name && profile.state && profile.city)
+        );
         setUser({
           ...baseUser,
           name: profile.full_name || baseUser.name,
@@ -65,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           companyName: profile.company_name || undefined,
           state: profile.state || undefined,
           city: profile.city || undefined,
-          onboardingCompleted: !!profile.onboarding_completed,
+          onboardingCompleted: isComplete,
         });
       } else {
         // Upsert new profile record
@@ -193,6 +197,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.state !== undefined) updates.state = data.state;
       if (data.city !== undefined) updates.city = data.city;
 
+      // Mark onboarding as completed when company, state, city are present
+      const isNowComplete = Boolean(
+        data.companyName || user.companyName
+      ) && Boolean(data.state || user.state) && Boolean(data.city || user.city);
+
+      if (isNowComplete) {
+        updates.onboarding_completed = true;
+      }
+
       const { error } = await supabase.from("profiles").upsert(updates);
 
       if (error) {
@@ -207,7 +220,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               companyName: data.companyName !== undefined ? data.companyName : prev.companyName,
               state: data.state !== undefined ? data.state : prev.state,
               city: data.city !== undefined ? data.city : prev.city,
-              onboardingCompleted: true,
+              onboardingCompleted: isNowComplete || prev.onboardingCompleted,
             }
           : null
       );

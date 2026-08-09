@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/_lib/auth-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/_components/ui/avatar";
@@ -112,25 +113,30 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 sm:space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+        <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
           Settings
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Manage your account, organization details, and application preferences.
+        <p className="text-sm text-muted-foreground font-medium mt-1">
+          Manage your account, organization details, notifications, and API credentials.
         </p>
       </div>
 
-      {/* Profile */}
-      <Card className="border-border">
+      {/* Profile & Organization */}
+      <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-black/5 dark:bg-white/10 text-foreground shadow-2xs">
               <User className="h-[18px] w-[18px]" />
             </div>
             <div>
-              <CardTitle className="text-base">Profile &amp; Organization</CardTitle>
+              <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Profile &amp; Organization</CardTitle>
               <CardDescription>Update your personal information and company name</CardDescription>
             </div>
           </div>
@@ -480,6 +486,6 @@ export default function SettingsPage() {
           </div>
         </CardHeader>
       </Card>
-    </div>
+    </motion.div>
   );
 }

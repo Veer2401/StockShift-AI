@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { motion } from "motion/react";
 import { useInventory } from "@/_lib/inventory-context";
 import {
   financialSummaries,
@@ -40,10 +41,10 @@ import {
   DollarSign,
   Calendar,
   Brain,
-  Sparkles,
   TrendingUp,
   AlertTriangle,
   ShieldAlert,
+  CheckCircle2,
   Loader2,
   RefreshCw,
 } from "lucide-react";
@@ -498,32 +499,37 @@ export default function ReportsPage() {
   }, [forecast, selectedSku, inventoryItems]);
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-medium tracking-tight sm:text-2xl">Reports</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl text-foreground">Reports</h1>
+          <p className="text-sm text-muted-foreground font-medium">
             Generate reports and view AI-powered forecasts
           </p>
         </div>
-        <Badge variant="outline" className="w-fit gap-1.5">
-          <Calendar className="h-3.5 w-3.5" />
+        <Badge variant="outline" className="w-fit gap-1.5 rounded-xl bg-white/70 dark:bg-zinc-800/70 backdrop-blur-md px-3 py-1 font-semibold border-white/60">
+          <Calendar className="h-3.5 w-3.5 text-emerald-600" />
           {startDate} — {endDate}
         </Badge>
       </div>
 
       <Tabs defaultValue="reports" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="reports" className="gap-1.5">
+        <TabsList className="p-1 bg-black/5 dark:bg-white/10 backdrop-blur-md rounded-2xl border border-white/60">
+          <TabsTrigger value="reports" className="gap-1.5 rounded-xl font-semibold active:scale-95 transition-all">
             <FileText className="h-3.5 w-3.5" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="forecast" className="gap-1.5">
-            <Brain className="h-3.5 w-3.5" />
+          <TabsTrigger value="forecast" className="gap-1.5 rounded-xl font-semibold active:scale-95 transition-all">
+            <Brain className="h-3.5 w-3.5 text-emerald-600" />
             AI Forecast
           </TabsTrigger>
-          <TabsTrigger value="anomalies" className="gap-1.5">
-            <ShieldAlert className="h-3.5 w-3.5" />
+          <TabsTrigger value="anomalies" className="gap-1.5 rounded-xl font-semibold active:scale-95 transition-all">
+            <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />
             Anomalies
           </TabsTrigger>
         </TabsList>
@@ -531,9 +537,9 @@ export default function ReportsPage() {
         {/* ── Reports Tab ──────────────────────────────────────────── */}
 
         <TabsContent value="reports" className="space-y-6">
-          <Card className="border border-border/60 shadow-none">
+          <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Date Range</CardTitle>
+              <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Date Range</CardTitle>
               <CardDescription>
                 Select a preset or pick custom dates
               </CardDescription>
@@ -546,6 +552,7 @@ export default function ReportsPage() {
                     size="sm"
                     variant={preset === p.key ? "default" : "outline"}
                     onClick={() => selectPreset(p.key)}
+                    className="rounded-xl font-semibold active:scale-95"
                   >
                     {p.label}
                   </Button>
@@ -558,14 +565,14 @@ export default function ReportsPage() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-auto"
+                    className="w-auto rounded-xl"
                   />
-                  <span className="text-muted-foreground">to</span>
+                  <span className="text-muted-foreground font-medium text-xs">to</span>
                   <Input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-auto"
+                    className="w-auto rounded-xl"
                   />
                 </div>
               )}
@@ -720,7 +727,6 @@ export default function ReportsPage() {
               <div className="flex-1">
                 <CardTitle className="text-base flex items-center gap-1.5">
                   Demand Forecast
-                  <Sparkles className="h-3.5 w-3.5 text-foreground" />
                 </CardTitle>
                 <CardDescription>
                   14-day AI-powered demand prediction with reorder recommendations
@@ -1074,7 +1080,7 @@ export default function ReportsPage() {
                           </div>
                           {a.recommendation && (
                             <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
-                              <Sparkles className="h-3 w-3" />
+                              <CheckCircle2 className="h-3 w-3" />
                               {a.recommendation}
                             </p>
                           )}
@@ -1092,6 +1098,6 @@ export default function ReportsPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }

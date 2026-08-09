@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { motion } from "motion/react";
 import { useInventory } from "@/_lib/inventory-context";
 import { formatCurrency, formatDate } from "@/_lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/_components/ui/tabs";
@@ -37,7 +38,6 @@ import {
   PiggyBank,
   Calculator,
   Target,
-  Sparkles,
   Package,
 } from "lucide-react";
 import type { AiRecommendation, CostEntry, YearlyForecastSummary } from "@/_lib/types";
@@ -241,34 +241,39 @@ export default function FinancePage() {
   }, [plTotals, growthRate]);
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       <div>
         <h1 className="text-xl font-bold tracking-tight sm:text-2xl text-foreground">
           Financial Planner &amp; Analytics
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground font-medium mt-1">
           Real-time cost tracking, P&amp;L analysis, and AI financial forecasting based on your inventory database.
         </p>
       </div>
 
       <Tabs defaultValue="recommendations" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-3xl">
+        <TabsList className="grid w-full grid-cols-4 max-w-3xl p-1 bg-black/5 dark:bg-white/10 backdrop-blur-md rounded-2xl border border-white/60">
           <TabsTrigger
             value="recommendations"
-            className="gap-1 sm:gap-2 text-xs sm:text-sm"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-xl font-semibold active:scale-95 transition-all"
           >
-            <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />
-            <span className="hidden sm:inline">AI</span> Recs
+            <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />
+            <span className="hidden sm:inline">Smart</span> Recs
           </TabsTrigger>
-          <TabsTrigger value="costs" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+          <TabsTrigger value="costs" className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-xl font-semibold active:scale-95 transition-all">
             <Calculator className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Cost</span> Tracking
           </TabsTrigger>
-          <TabsTrigger value="pnl" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+          <TabsTrigger value="pnl" className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-xl font-semibold active:scale-95 transition-all">
             <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             P&amp;L
           </TabsTrigger>
-          <TabsTrigger value="forecast" className="gap-1 sm:gap-2 text-xs sm:text-sm">
+          <TabsTrigger value="forecast" className="gap-1 sm:gap-2 text-xs sm:text-sm rounded-xl font-semibold active:scale-95 transition-all">
             <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             <span className="hidden sm:inline">Fore</span>cast
           </TabsTrigger>
@@ -276,29 +281,29 @@ export default function FinancePage() {
 
         {/* ── Tab 1: AI Recommendations ── */}
         <TabsContent value="recommendations" className="space-y-6">
-          <Card className="border border-border/60 shadow-none">
+          <Card>
             <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-emerald-600" />
-                  AI Stock Optimization Recommendations
+                <CardTitle className="text-base font-bold tracking-tight text-foreground flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-emerald-600" />
+                  Stock Optimization Recommendations
                 </CardTitle>
                 <CardDescription>
                   Suggested stock levels based on your inventory history and planning horizon.
                 </CardDescription>
               </div>
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground">Planning horizon (days)</p>
-                <div className="inline-flex rounded-md border bg-background p-0.5 text-xs">
+                <p className="text-xs text-muted-foreground font-medium">Planning horizon (days)</p>
+                <div className="inline-flex rounded-xl border border-black/5 dark:border-white/10 bg-background/80 backdrop-blur-md p-1 text-xs gap-1">
                   {[30, 60, 90].map((h) => (
                     <button
                       key={h}
                       type="button"
                       onClick={() => setRecommendationHorizon(h as 30 | 60 | 90)}
-                      className={`px-3 py-1 rounded-sm font-medium transition-colors ${
+                      className={`px-3 py-1 rounded-lg font-semibold transition-all active:scale-95 ${
                         recommendationHorizon === h
-                          ? "bg-emerald-600 text-white"
-                          : "text-muted-foreground hover:bg-muted"
+                          ? "bg-emerald-600 text-white shadow-2xs"
+                          : "text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5"
                       }`}
                     >
                       {h}d
@@ -660,6 +665,6 @@ export default function FinancePage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }

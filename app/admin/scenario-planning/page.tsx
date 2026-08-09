@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { motion } from "motion/react";
 import { useInventory } from "@/_lib/inventory-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
 import { Button } from "@/_components/ui/button";
@@ -144,22 +145,27 @@ export default function ScenarioPlanningPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-          <Target className="w-8 h-8 text-emerald-600" />
+        <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+          <Target className="w-7 h-7 text-emerald-600" />
           Scenario Planning
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground font-medium mt-1">
           Run "what-if" scenarios to simulate demand spikes and lead-time delays on your inventory.
         </p>
       </div>
 
       {/* Controls */}
-      <Card className="border-border/60 shadow-none">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
             <Zap className="w-5 h-5 text-emerald-600" />
             Scenario Parameters
           </CardTitle>
@@ -343,7 +349,6 @@ export default function ScenarioPlanningPage() {
                 {sku.action_needed && (
                   <div className="mt-3 p-2.5 bg-background border border-border/60 rounded text-xs">
                     <span className="font-semibold text-foreground">📋 Recommendation: </span>
-                    <span className="text-muted-foreground">{sku.action_needed}</span>
                   </div>
                 )}
               </div>
@@ -351,6 +356,6 @@ export default function ScenarioPlanningPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }

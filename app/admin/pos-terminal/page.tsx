@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { motion } from "motion/react";
 import { useAuth } from "@/_lib/auth-context";
 import { useInventory } from "@/_lib/inventory-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
@@ -126,71 +127,107 @@ export default function PosTerminalPage() {
   }, []);
 
   return (
-    <div className="flex h-full gap-4 p-6 overflow-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="flex flex-col lg:flex-row h-full gap-4 overflow-hidden"
+    >
       {/* LEFT: Search & Item Picker */}
       <div className="flex flex-1 flex-col gap-4 overflow-hidden">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-            <ScanBarcode className="w-8 h-8 text-emerald-600" />
+          <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+            <ScanBarcode className="w-7 h-7 text-emerald-600" />
             POS Terminal
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground font-medium mt-1">
             Search by SKU or product name, add items to cart, and process sales in real-time.
           </p>
         </div>
 
         {/* Search bar */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative flex items-center rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-white/80 dark:border-white/15 shadow-sm hover:shadow-md focus-within:shadow-lg focus-within:ring-2 focus-within:ring-emerald-500/40 focus-within:border-emerald-500/60 transition-all duration-200 p-1.5">
+          <div className="flex items-center justify-center p-2 rounded-xl bg-emerald-500/10 text-emerald-600 shrink-0 ml-1">
+            <Search className="h-4 w-4" />
+          </div>
           <Input
             ref={searchRef}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search SKU or product name..."
-            className="pl-10 h-11 text-sm"
+            placeholder="Scan barcode, SKU code (e.g. DRY-001) or product name..."
+            className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 h-10 text-sm font-medium placeholder:text-muted-foreground/60 pr-16"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+          <div className="absolute right-3 flex items-center gap-1.5">
+            {searchQuery ? (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={() => setSearchQuery("")}
+                className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground active:scale-95"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Badge variant="outline" className="hidden sm:flex items-center gap-1 text-[10px] font-bold text-muted-foreground/70 bg-black/5 dark:bg-white/5 border-black/10 px-2 py-0.5 rounded-lg select-none">
+                <ScanBarcode className="w-3 h-3 text-emerald-600" /> READY
+              </Badge>
+            )}
+          </div>
         </div>
 
         {/* Search results */}
         {filteredItems.length > 0 && (
-          <div className="border border-border/60 rounded-xl divide-y divide-border/40 max-h-[calc(100vh-320px)] overflow-y-auto bg-card">
+          <div className="border border-white/80 dark:border-white/10 rounded-2xl divide-y divide-black/5 dark:divide-white/10 max-h-[calc(100vh-320px)] overflow-y-auto bg-white/85 dark:bg-zinc-900/85 backdrop-blur-2xl shadow-lg">
             {filteredItems.map((item) => (
-              <button
+              <div
                 key={item.id}
                 onClick={() => addToCart(item)}
-                className="flex items-center justify-between w-full px-4 py-3 text-left hover:bg-emerald-50/50 transition-colors"
+                className="flex items-center justify-between w-full px-4 py-3.5 text-left hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15 transition-all duration-150 cursor-pointer active:scale-[0.99] group select-none"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-foreground truncate">
-                    {item.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {item.sku} · {item.category} · {item.quantity} in stock
-                  </p>
+                <div className="min-w-0 flex-1 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-foreground truncate tracking-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                      {item.name}
+                    </p>
+                    <Badge variant="secondary" className="font-mono text-[10px] font-bold px-1.5 py-0 rounded-md bg-black/5 dark:bg-white/10 text-foreground border-0">
+                      {item.sku}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                    <span>{item.category}</span>
+                    <span>·</span>
+                    <span className={item.quantity <= item.reorderPoint ? "text-amber-600 font-semibold" : "text-emerald-600 font-semibold"}>
+                      {item.quantity} in stock
+                    </span>
+                    {item.location && (
+                      <>
+                        <span>·</span>
+                        <span>{item.location}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="text-right shrink-0 ml-4">
-                  <p className="text-sm font-bold text-foreground">
-                    ₹{item.sellPrice.toLocaleString()}
-                  </p>
-                  <Plus className="h-4 w-4 text-emerald-600 ml-auto mt-0.5" />
+                <div className="flex items-center gap-3 shrink-0 ml-4">
+                  <div className="text-right">
+                    <p className="text-sm font-extrabold text-foreground tracking-tight">
+                      ₹{item.sellPrice.toLocaleString()}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground font-medium">Cost: ₹{item.unitCost}</p>
+                  </div>
+                  <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-xs group-hover:scale-110 transition-transform">
+                    <Plus className="h-4 w-4" />
+                  </div>
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
 
         {searchQuery.trim() && filteredItems.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Package className="h-10 w-10 mb-2 opacity-40" />
-            <p className="text-sm">No items found for &ldquo;{searchQuery}&rdquo;</p>
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground border border-dashed border-black/10 dark:border-white/10 rounded-2xl p-6 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md">
+            <Package className="h-10 w-10 mb-2 text-muted-foreground/40 animate-bounce" />
+            <p className="text-sm font-semibold text-foreground">No inventory items matched &ldquo;{searchQuery}&rdquo;</p>
+            <p className="text-xs text-muted-foreground mt-1">Try searching by SKU code (e.g. DRY-001) or product name</p>
           </div>
         )}
 
@@ -319,6 +356,6 @@ export default function PosTerminalPage() {
           </Button>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

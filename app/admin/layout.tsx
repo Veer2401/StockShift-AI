@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import {
@@ -75,28 +76,26 @@ function getInitials(name: string): string {
 }
 
 function BottomSection({
-  router,
   pathname,
 }: {
-  router: any;
   pathname: string;
 }) {
   const isSettingsActive = pathname.startsWith("/admin/settings");
 
   return (
     <div className="mt-auto border-t border-black/5 px-3 py-3">
-      <button
-        onClick={() => router.push("/admin/settings")}
+      <Link
+        href="/admin/settings"
         className={cn(
-          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200",
+          "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 select-none",
           isSettingsActive
-            ? "bg-slate-100 text-foreground font-semibold shadow-2xs"
-            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+            ? "bg-black/5 dark:bg-white/10 text-foreground font-semibold shadow-2xs"
+            : "text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground"
         )}
       >
         <Settings className="h-[18px] w-[18px] shrink-0" />
         <span>Settings</span>
-      </button>
+      </Link>
     </div>
   );
 }
@@ -106,7 +105,7 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -134,7 +133,8 @@ export default function AdminLayout({
     if (!isLoading) {
       if (!isAuthenticated || user?.role !== "admin") {
         router.replace("/login");
-      } else if (!user.onboardingCompleted && pathname !== "/admin/onboarding") {
+      } else if (!user.onboardingCompleted && !user.companyName && pathname !== "/admin/onboarding") {
+        // Redirect to onboarding only if profile/company setup is completely missing
         router.replace("/admin/onboarding");
       }
     }
@@ -142,6 +142,9 @@ export default function AdminLayout({
 
   useEffect(() => {
     setMobileOpen(false);
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
   }, [pathname]);
 
   if (isLoading || !isAuthenticated || user?.role !== "admin") {
@@ -174,29 +177,30 @@ export default function AdminLayout({
       </div>
 
       {/* Nav sections */}
-      <nav className="flex-1 space-y-6 px-3 pt-4">
+      <nav className="flex-1 space-y-5 px-3 pt-4 overflow-y-auto">
         {sidebarSections.map((section) => (
           <div key={section.title}>
-            <p className="mb-2 px-3 text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
               {section.title}
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {section.items.map((item) => {
-                const isActive = pathname.startsWith(item.href);
+                const isActive = pathname === item.href || (item.href !== "/admin/dashboard" && pathname.startsWith(item.href));
                 return (
-                  <button
+                  <Link
                     key={item.href}
-                    onClick={() => router.push(item.href)}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                      "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-150 active:scale-[0.97] select-none",
                       isActive
-                        ? "bg-muted text-foreground font-medium"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        ? "bg-black/5 dark:bg-white/10 text-foreground font-semibold shadow-2xs backdrop-blur-sm"
+                        : "text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground"
                     )}
                   >
-                    <item.icon className="h-[18px] w-[18px] shrink-0" />
-                    <span>{item.label}</span>
-                  </button>
+                    <item.icon className={cn("h-[18px] w-[18px] shrink-0 transition-transform duration-150", isActive ? "text-foreground scale-105" : "text-muted-foreground")} />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
                 );
               })}
             </div>
@@ -205,7 +209,7 @@ export default function AdminLayout({
       </nav>
 
       {/* Bottom section: Settings */}
-      <BottomSection router={router} pathname={pathname} />
+      <BottomSection pathname={pathname} />
     </>
   );
 
@@ -214,27 +218,26 @@ export default function AdminLayout({
       className="flex h-screen overflow-hidden text-foreground p-3 gap-3"
       style={{
         background: "linear-gradient(135deg, #B8FFD0 0%, #FFF6C9 100%)",
-        fontFamily: "var(--font-inter), sans-serif",
-        fontSize: "110%",
+        fontFamily: "var(--font-inter), system-ui, -apple-system, sans-serif",
       }}
     >
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/20 md:hidden"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:hidden transition-opacity"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar — Desktop */}
-      <aside className="hidden md:flex w-[260px] shrink-0 flex-col rounded-2xl bg-white/80 backdrop-blur-sm shadow-sm border border-white/50">
+      <aside className="hidden md:flex w-[260px] shrink-0 flex-col rounded-3xl bg-white/75 dark:bg-zinc-900/75 backdrop-blur-2xl shadow-sm border border-white/60 dark:border-white/10">
         <SidebarContent />
       </aside>
 
       {/* Sidebar — Mobile */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-white shadow-lg transition-transform duration-300 md:hidden m-3 rounded-2xl",
+          "fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl shadow-2xl transition-transform duration-300 ease-out md:hidden m-3 rounded-3xl border border-white/60",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -242,20 +245,20 @@ export default function AdminLayout({
       </aside>
 
       {/* Main content area */}
-      <div className="flex flex-1 flex-col overflow-hidden rounded-2xl bg-white/80 backdrop-blur-sm shadow-sm border border-white/50">
+      <div className="flex flex-1 flex-col overflow-hidden rounded-3xl bg-white/75 dark:bg-zinc-900/75 backdrop-blur-2xl shadow-sm border border-white/60 dark:border-white/10">
         {/* Welcome header */}
-        <header className="flex h-14 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-black/5">
+        <header className="flex h-14 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-black/5 dark:border-white/10 bg-white/30 dark:bg-zinc-900/30 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground md:hidden"
+              className="h-8 w-8 text-muted-foreground hover:text-foreground md:hidden active:scale-95"
               onClick={() => setMobileOpen(true)}
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-sm font-medium text-foreground">
-              Welcome back, <span className="font-semibold">{user?.name?.split(" ")[0] ?? "User"}</span>
+            <h1 className="text-sm font-medium text-foreground tracking-tight">
+              Welcome back, <span className="font-semibold text-foreground">{user?.name?.split(" ")[0] ?? "User"}</span>
             </h1>
           </div>
         </header>

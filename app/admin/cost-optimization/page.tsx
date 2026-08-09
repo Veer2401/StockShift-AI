@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
+import { motion } from "motion/react";
 import { useInventory } from "@/_lib/inventory-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
 import { Button } from "@/_components/ui/button";
 import { Badge } from "@/_components/ui/badge";
-import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Sparkles, Plus, Package } from "lucide-react";
+import { DollarSign, TrendingDown, TrendingUp, AlertTriangle, Plus, Package } from "lucide-react";
 import Link from "next/link";
 import { formatCurrency } from "@/_lib/utils";
 import { LiquidationRadar } from "./components/LiquidationRadar";
@@ -127,23 +128,28 @@ export default function CostOptimizationPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-          <DollarSign className="w-8 h-8 text-emerald-600" />
+        <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+          <DollarSign className="w-7 h-7 text-emerald-600" />
           Cost Optimization Dashboard
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground font-medium mt-1">
           Real-time capital, holding cost, and overstock analysis calculated from your inventory database.
         </p>
       </div>
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-border/60 shadow-none">
+        <Card className="hover:scale-[1.01] transition-all">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-foreground flex items-center gap-2">
+            <CardTitle className="text-sm font-semibold tracking-tight text-foreground flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-blue-600" />
               Total Capital Locked
             </CardTitle>
@@ -213,7 +219,7 @@ export default function CostOptimizationPage() {
       <Card className="border-border/60 shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Sparkles className="w-5 h-5 text-emerald-600" />
+            <DollarSign className="w-5 h-5 text-emerald-600" />
             Monthly Holding Cost Analysis
           </CardTitle>
         </CardHeader>
@@ -239,7 +245,7 @@ export default function CostOptimizationPage() {
       <Card className="border-border/60 shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Sparkles className="w-5 h-5 text-emerald-600" />
+            <TrendingDown className="w-5 h-5 text-emerald-600" />
             Prioritized Cost Optimization Actions
           </CardTitle>
         </CardHeader>
@@ -323,6 +329,6 @@ export default function CostOptimizationPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </motion.div>
   );
 }

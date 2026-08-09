@@ -5,7 +5,7 @@ import { useInventory } from "@/_lib/inventory-context";
 import { Button } from "@/_components/ui/button";
 import { Input } from "@/_components/ui/input";
 import { Badge } from "@/_components/ui/badge";
-import { Sparkles, Bot, X, Send, ArrowRight, CheckCircle2, Package, FileText, Zap } from "lucide-react";
+import { Bot, X, Send, ArrowRight, CheckCircle2, Package, FileText, Zap } from "lucide-react";
 import { formatCurrency } from "@/_lib/utils";
 
 interface AgentMessage {
@@ -225,23 +225,23 @@ export function AiAgentWidget() {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-white shadow-xl hover:bg-emerald-500 transition-all hover:scale-105"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-emerald-600 px-4 py-3 text-white shadow-xl hover:bg-emerald-500 transition-all duration-150 active:scale-95 hover:scale-105 select-none"
       >
         <Bot className="h-5 w-5" />
-        <span className="font-bold text-sm hidden sm:inline">ShiftAI Assistant</span>
+        <span className="font-bold text-sm hidden sm:inline tracking-tight">ShiftAI Assistant</span>
       </button>
 
       {/* Side-Panel Drawer */}
       {isOpen && (
-        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-background border-l border-border/80 shadow-2xl flex flex-col">
+        <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[420px] bg-white/85 dark:bg-zinc-900/85 backdrop-blur-2xl border-l border-white/60 dark:border-white/10 shadow-2xl flex flex-col sm:m-3 sm:inset-y-3 sm:rounded-3xl sm:border border-white/80 transition-all duration-300 ease-out">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border/60 bg-muted/20">
+          <div className="flex items-center justify-between p-4 border-b border-black/5 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md sm:rounded-t-3xl">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
+              <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5">
+                <h3 className="font-bold text-sm text-foreground flex items-center gap-1.5 tracking-tight">
                   ShiftAI Assistant
                   <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 text-[10px] border-0">
                     ONLINE
@@ -250,7 +250,7 @@ export function AiAgentWidget() {
                 <p className="text-xs text-muted-foreground">Inventory &amp; Operations Assistant</p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="icon" className="rounded-xl active:scale-95" onClick={() => setIsOpen(false)}>
               <X className="w-4 h-4" />
             </Button>
           </div>
@@ -265,10 +265,10 @@ export function AiAgentWidget() {
                 }`}
               >
                 <div
-                  className={`p-3 rounded-xl max-w-[88%] leading-relaxed ${
+                  className={`p-3.5 rounded-2xl max-w-[88%] leading-relaxed shadow-2xs ${
                     msg.sender === "user"
-                      ? "bg-emerald-600 text-white rounded-br-none font-medium"
-                      : "bg-muted/30 border border-border/60 text-foreground rounded-bl-none"
+                      ? "bg-emerald-600 text-white rounded-br-xs font-medium"
+                      : "bg-white/80 dark:bg-zinc-800/80 border border-white/60 dark:border-white/10 backdrop-blur-md text-foreground rounded-bl-xs"
                   }`}
                 >
                   {msg.text}
@@ -276,16 +276,18 @@ export function AiAgentWidget() {
 
                 {/* Interactive Agent Action Card */}
                 {msg.actionCard && (
-                  <div className="w-[88%] p-3 rounded-xl border border-emerald-200 bg-emerald-50/50 space-y-2">
+                  <div className="w-[88%] p-3.5 rounded-2xl border border-emerald-200/80 bg-emerald-50/70 backdrop-blur-md space-y-2.5 shadow-2xs">
                     <p className="font-semibold text-emerald-900 text-xs">{msg.actionCard.title}</p>
 
                     {msg.actionCard.executed ? (
-                      <p className="text-emerald-700 font-semibold text-xs">✓ Added successfully</p>
+                      <p className="text-emerald-700 font-semibold text-xs flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Added successfully
+                      </p>
                     ) : (
                       <Button
                         size="sm"
                         onClick={() => handleExecuteAction(msg.id, msg.actionCard!)}
-                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg"
+                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl active:scale-[0.97] transition-all shadow-sm"
                       >
                         Confirm Add
                       </Button>
@@ -295,7 +297,7 @@ export function AiAgentWidget() {
               </div>
             ))}
             {isProcessing && (
-              <div className="text-muted-foreground italic text-xs flex items-center gap-2">
+              <div className="text-muted-foreground italic text-xs flex items-center gap-2 p-2">
                 <Bot className="w-3.5 h-3.5 animate-spin text-emerald-600" />
                 Processing request...
               </div>
@@ -303,15 +305,15 @@ export function AiAgentWidget() {
           </div>
 
           {/* Input Footer */}
-          <div className="p-3 border-t border-border/60 bg-background flex gap-2">
+          <div className="p-3.5 border-t border-black/5 dark:border-white/10 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-md sm:rounded-b-3xl flex gap-2">
             <Input
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               placeholder="e.g. Add 50 stock to low stock items..."
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-              className="text-xs bg-background"
+              className="text-xs bg-white/80 dark:bg-zinc-800/80 rounded-xl"
             />
-            <Button onClick={handleSendMessage} size="icon" className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0">
+            <Button onClick={handleSendMessage} size="icon" className="bg-emerald-600 hover:bg-emerald-500 text-white shrink-0 rounded-xl active:scale-95">
               <Send className="w-4 h-4" />
             </Button>
           </div>

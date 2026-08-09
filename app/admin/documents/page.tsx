@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
 import { Button } from "@/_components/ui/button";
 import { Input } from "@/_components/ui/input";
@@ -14,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/_components/ui/dialog";
-import { FileCode, Upload, Search, Sparkles, FileText, CheckCircle2, DollarSign, Calendar, Building2, MessageSquare, Plus, Trash2 } from "lucide-react";
+import { FileCode, Upload, Search, FileText, CheckCircle2, DollarSign, Calendar, Building2, MessageSquare, Plus, Trash2 } from "lucide-react";
 import { formatCurrency } from "@/_lib/utils";
 
 interface DocItem {
@@ -107,19 +108,24 @@ export default function DocumentsPage() {
   );
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-            <FileCode className="w-8 h-8 text-emerald-600" />
+          <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+            <FileCode className="w-7 h-7 text-emerald-600" />
             Document Intelligence &amp; RAG Hub
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground font-medium mt-1">
             Upload supplier invoices, contracts, and catalogs to extract metadata and query terms with AI.
           </p>
         </div>
-        <Button onClick={() => setIsUploadOpen(true)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+        <Button onClick={() => setIsUploadOpen(true)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl active:scale-95 transition-all shadow-md shadow-emerald-600/20">
           <Plus className="w-4 h-4 mr-2" /> Upload Business Document
         </Button>
       </div>
@@ -128,7 +134,7 @@ export default function DocumentsPage() {
       <Card className="border-border/60 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent shadow-none">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Sparkles className="w-5 h-5 text-emerald-600" />
+            <FileCode className="w-5 h-5 text-emerald-600" />
             Ask AI Across Your Uploaded Invoices &amp; Contracts
           </CardTitle>
         </CardHeader>
@@ -303,6 +309,6 @@ export default function DocumentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }

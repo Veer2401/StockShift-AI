@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { motion } from "motion/react";
 import { useInventory } from "@/_lib/inventory-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
 import { Button } from "@/_components/ui/button";
@@ -143,22 +144,27 @@ export default function WarehouseOptimizationPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-          <Warehouse className="w-8 h-8 text-emerald-600" />
+        <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+          <Warehouse className="w-7 h-7 text-emerald-600" />
           Multi-Warehouse Optimization
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground font-medium mt-1">
           Balance stock across your locations to minimize holding costs and order delays.
         </p>
       </div>
 
       {/* Network Health Score */}
-      <Card className="border-border/60 shadow-none">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
             <TrendingUp className="w-5 h-5 text-emerald-600" />
             Warehouse Network Balance Score
           </CardTitle>
@@ -292,6 +298,6 @@ export default function WarehouseOptimizationPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }

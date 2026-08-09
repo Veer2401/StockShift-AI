@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import { useAuth } from "@/_lib/auth-context";
 import { getSupabaseClient } from "@/_lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
@@ -15,7 +16,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/_components/ui/dialog";
-import { Users, Plus, Mail, Phone, Clock, Package, Building2, Trash2, Edit, Sparkles, Loader2 } from "lucide-react";
+import { Users, Plus, Mail, Phone, Clock, Package, Building2, Trash2, Edit, Zap, Loader2 } from "lucide-react";
 import { cn } from "@/_lib/utils";
 import type { Vendor } from "@/_lib/types";
 
@@ -185,39 +186,44 @@ export default function VendorsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 overflow-auto h-full">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+      className="space-y-6"
+    >
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-foreground sm:text-3xl">
-            <Users className="w-8 h-8 text-emerald-600" />
+          <h1 className="text-xl font-bold flex items-center gap-2.5 text-foreground sm:text-2xl tracking-tight">
+            <Users className="w-7 h-7 text-emerald-600" />
             Vendor Directory &amp; Suppliers
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground font-medium mt-1">
             Manage your suppliers, lead times, minimum order quantities (MOQ), and payment SLAs.
           </p>
         </div>
-        <Button onClick={handleOpenAdd} className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+        <Button onClick={handleOpenAdd} className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl active:scale-95 transition-all shadow-md shadow-emerald-600/20">
           <Plus className="w-4 h-4 mr-2" /> Add New Vendor
         </Button>
       </div>
 
       {/* Vendors Grid */}
       {loading ? (
-        <div className="p-12 text-center text-muted-foreground text-sm">
+        <div className="p-12 text-center text-muted-foreground text-sm font-medium">
           Loading vendor database...
         </div>
       ) : vendors.length === 0 ? (
-        <Card className="border-2 border-dashed border-emerald-500/30 bg-card/60 p-8 text-center shadow-none">
+        <Card className="border-2 border-dashed border-emerald-500/30 p-8 text-center shadow-none">
           <div className="mx-auto flex max-w-md flex-col items-center justify-center space-y-3">
-            <div className="rounded-full bg-emerald-500/10 p-4 text-emerald-600">
+            <div className="rounded-full bg-emerald-500/10 p-4 text-emerald-600 shadow-2xs">
               <Building2 className="h-8 w-8" />
             </div>
-            <h3 className="text-xl font-bold text-foreground">No Suppliers Added Yet</h3>
-            <p className="text-sm text-muted-foreground">
+            <h3 className="text-xl font-bold tracking-tight text-foreground">No Suppliers Added Yet</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
               Add your primary suppliers to automate purchase orders and track average delivery lead times.
             </p>
-            <Button onClick={handleOpenAdd} className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium">
+            <Button onClick={handleOpenAdd} className="mt-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl active:scale-95">
               <Plus className="h-4 w-4 mr-2" /> Add Your First Vendor
             </Button>
           </div>
@@ -225,19 +231,19 @@ export default function VendorsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {vendors.map((vendor) => (
-            <Card key={vendor.id} className="border-border/60 shadow-none hover:shadow-md transition-shadow">
+            <Card key={vendor.id} className="hover:scale-[1.01] transition-all">
               <CardHeader className="pb-3 flex flex-row items-start justify-between space-y-0">
                 <div>
-                  <CardTitle className="text-base font-bold text-foreground">{vendor.name}</CardTitle>
+                  <CardTitle className="text-base font-bold text-foreground tracking-tight">{vendor.name}</CardTitle>
                   {vendor.contactPerson && (
-                    <p className="text-xs text-muted-foreground mt-0.5">Contact: {vendor.contactPerson}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 font-medium">Contact: {vendor.contactPerson}</p>
                   )}
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => handleOpenEdit(vendor)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground active:scale-95" onClick={() => handleOpenEdit(vendor)}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-rose-500 hover:text-rose-600" onClick={() => handleDelete(vendor.id)}>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg text-rose-500 hover:text-rose-600 active:scale-95" onClick={() => handleDelete(vendor.id)}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
@@ -246,25 +252,25 @@ export default function VendorsPage() {
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span className="truncate text-foreground font-medium">{vendor.email}</span>
+                    <span className="truncate text-foreground font-semibold">{vendor.email}</span>
                   </div>
                   {vendor.phone && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                      <span className="text-foreground">{vendor.phone}</span>
+                      <span className="text-foreground font-medium">{vendor.phone}</span>
                     </div>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t text-xs">
-                  <div className="bg-muted/30 p-2 rounded">
-                    <span className="text-muted-foreground flex items-center gap-1">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-black/5 dark:border-white/10 text-xs">
+                  <div className="bg-black/2 dark:bg-white/5 p-2 rounded-xl border border-black/5 dark:border-white/5">
+                    <span className="text-muted-foreground flex items-center gap-1 font-medium">
                       <Clock className="w-3 h-3 text-amber-600" /> Avg Lead Time:
                     </span>
                     <span className="font-bold text-foreground block mt-0.5">{vendor.leadTimeDays} Days</span>
                   </div>
-                  <div className="bg-muted/30 p-2 rounded">
-                    <span className="text-muted-foreground flex items-center gap-1">
+                  <div className="bg-black/2 dark:bg-white/5 p-2 rounded-xl border border-black/5 dark:border-white/5">
+                    <span className="text-muted-foreground flex items-center gap-1 font-medium">
                       <Package className="w-3 h-3 text-blue-600" /> Min Order (MOQ):
                     </span>
                     <span className="font-bold text-foreground block mt-0.5">{vendor.minOrderQty} Units</span>
@@ -272,11 +278,11 @@ export default function VendorsPage() {
                 </div>
 
                 <div className="flex justify-between items-center pt-2 text-xs">
-                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-0">
+                  <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 border-0 rounded-lg font-semibold px-2 py-0.5">
                     SLA: {vendor.paymentTerms}
                   </Badge>
                   {vendor.address && (
-                    <span className="text-muted-foreground truncate max-w-[140px] text-right">{vendor.address}</span>
+                    <span className="text-muted-foreground truncate max-w-[140px] text-right font-medium">{vendor.address}</span>
                   )}
                 </div>
               </CardContent>
@@ -311,7 +317,7 @@ export default function VendorsPage() {
                   modalTab === "ai" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Sparkles className="h-3.5 w-3.5" /> AI Auto-Fill
+                <Zap className="h-3.5 w-3.5" /> Auto-Fill
               </button>
             </div>
           )}
@@ -320,7 +326,7 @@ export default function VendorsPage() {
           {modalTab === "ai" && !editingVendor && (
             <div className="space-y-3 py-2">
               <p className="text-xs text-muted-foreground">
-                Paste a vendor invoice, rate card, email, or website text below and AI will extract all details.
+                Paste a vendor invoice, rate card, email, or website text below and details will be extracted automatically.
               </p>
               <textarea
                 value={aiRawText}
@@ -338,7 +344,7 @@ export default function VendorsPage() {
                 {aiParsing ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Extracting...</>
                 ) : (
-                  <><Sparkles className="mr-2 h-4 w-4" /> Extract Vendor Details</>
+                  <><Zap className="mr-2 h-4 w-4" /> Extract Vendor Details</>
                 )}
               </Button>
             </div>
@@ -436,6 +442,6 @@ export default function VendorsPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
