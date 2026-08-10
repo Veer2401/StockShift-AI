@@ -31,3 +31,6 @@ yarn-error.log*
 # misc
 *.tsbuildinfo
 next-env.d.ts
+
+#ignore deployment guide
+deployment_guide.md
