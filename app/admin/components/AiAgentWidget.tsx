@@ -32,6 +32,48 @@ interface AgentMessage {
   };
 }
 
+function FormattedMessage({ text }: { text: string }) {
+  const lines = text.split("\n");
+
+  return (
+    <div className="space-y-1">
+      {lines.map((line, lineIdx) => {
+        if (!line.trim()) return <div key={lineIdx} className="h-1" />;
+
+        // Parse **bold** substrings
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+
+        const renderedLine = parts.map((part, partIdx) => {
+          if (part.startsWith("**") && part.endsWith("**")) {
+            return (
+              <strong key={partIdx} className="font-bold text-foreground">
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          return <span key={partIdx}>{part}</span>;
+        });
+
+        // Bullet point lines starting with •
+        if (line.trim().startsWith("•")) {
+          return (
+            <div key={lineIdx} className="flex items-start gap-2 pl-1 py-0.5">
+              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold select-none">•</span>
+              <div className="flex-1 text-xs text-foreground/90">{renderedLine}</div>
+            </div>
+          );
+        }
+
+        return (
+          <div key={lineIdx} className="text-xs text-foreground/90 leading-relaxed">
+            {renderedLine}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function AiAgentWidget() {
   const { items, addItem, updateItem, refreshData } = useInventory();
 
@@ -337,7 +379,7 @@ export function AiAgentWidget() {
                       : "bg-white/80 dark:bg-zinc-800/80 border border-white/60 dark:border-white/10 backdrop-blur-md text-foreground rounded-bl-xs"
                   }`}
                 >
-                  {msg.text}
+                  <FormattedMessage text={msg.text} />
                 </div>
 
                 {/* Interactive Agent Action Card */}
