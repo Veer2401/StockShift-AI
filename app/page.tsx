@@ -9,6 +9,11 @@ import {
   ChevronRight,
   Boxes,
   Brain,
+  ScanBarcode,
+  Building2,
+  FileCode,
+  Target,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/_components/ui/button";
 import {
@@ -27,28 +32,40 @@ import SplashCursor from "./components/SplashCursor";
 
 const features = [
   {
-    icon: Package,
-    title: "Inventory Tracking",
+    icon: Building2,
+    title: "Domain-Aware AI Onboarding",
     description:
-      "Real-time stock levels across all warehouses. Know exactly what you have and where it is.",
+      "Instantly generate 30+ industry-tailored inventory items with sector-based SKU codes for Food, Retail, Electronics & Auto.",
+  },
+  {
+    icon: ScanBarcode,
+    title: "POS Terminal & Barcode Scanner",
+    description:
+      "High-speed point-of-sale scanner interface with instant SKU search, auto-cart computation, and real-time inventory sync.",
+  },
+  {
+    icon: FileCode,
+    title: "Document RAG Assistant",
+    description:
+      "Upload supplier invoices, POs, and manuals to search and chat with your documents using built-in AI RAG.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Demand Forecasting & Anomalies",
+    description:
+      "Predictive AI forecasting for reorder points, stockout prevention, and automated anomaly detection.",
+  },
+  {
+    icon: Target,
+    title: "Cost & Scenario Planning",
+    description:
+      "Simulate supplier price shifts, lead-time changes, and profit margins with dedicated AI scenario tools.",
   },
   {
     icon: BarChart3,
-    title: "Financial Insights",
+    title: "Financial & Stock Analytics",
     description:
-      "Cost tracking, profit & loss, and forecasting built right into your inventory flow.",
-  },
-  {
-    icon: FileText,
-    title: "Smart Reports",
-    description:
-      "Valuation, movement, and financial reports generated with a single click.",
-  },
-  {
-    icon: Brain,
-    title: "AI-Powered Insights",
-    description:
-      "Smart recommendations for reorder points, anomaly detection, and overstock—so you act on data, not guesswork.",
+      "Real-time P&L tracking, multi-warehouse optimization, and automated valuation reports built into your flow.",
   },
 ];
 
@@ -245,7 +262,7 @@ export default function LandingPage() {
               From the loading dock to the boardroom. One platform, total visibility.
             </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => (
               <div
                 key={feature.title}
