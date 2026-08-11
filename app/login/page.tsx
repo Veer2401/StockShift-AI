@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/_lib/auth-context";
@@ -37,7 +37,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const initialError = searchParams.get("error");
 
-  const { login, signup, loginWithGoogle } = useAuth();
+  const { login, signup, loginWithGoogle, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -47,6 +47,12 @@ function LoginForm() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
   const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated) {
+      router.replace("/admin/dashboard");
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
