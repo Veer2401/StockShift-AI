@@ -36,6 +36,7 @@ import {
   motion,
 } from "motion/react";
 import { AiAgentWidget } from "./components/AiAgentWidget";
+import { Skeleton } from "@/_components/ui/skeleton";
 
 const sidebarSections = [
   {
@@ -148,7 +149,57 @@ export default function AdminLayout({
   }, [pathname]);
 
   if (isLoading || !isAuthenticated || user?.role !== "admin") {
-    return null;
+    return (
+      <div
+        className="flex h-screen overflow-hidden text-foreground p-3 gap-3"
+        style={{
+          background: "linear-gradient(135deg, #B8FFD0 0%, #FFF6C9 100%)",
+          fontFamily: "var(--font-inter), system-ui, -apple-system, sans-serif",
+        }}
+      >
+        {/* Sidebar skeleton */}
+        <aside className="hidden md:flex w-[260px] shrink-0 flex-col rounded-3xl bg-white/75 dark:bg-zinc-900/75 backdrop-blur-2xl shadow-sm border border-white/60 dark:border-white/10 p-5 space-y-6">
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-5 w-28" />
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-16" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-xl" />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-20" />
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-xl" />
+            ))}
+          </div>
+          <div className="mt-auto space-y-2">
+            <Skeleton className="h-3 w-14" />
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-full rounded-xl" />
+            ))}
+          </div>
+        </aside>
+
+        {/* Main content skeleton */}
+        <div className="flex flex-1 flex-col overflow-hidden rounded-3xl bg-white/75 dark:bg-zinc-900/75 backdrop-blur-2xl shadow-sm border border-white/60 dark:border-white/10">
+          <header className="flex h-14 shrink-0 items-center justify-between px-4 sm:px-6 border-b border-black/5 dark:border-white/10 bg-white/30 dark:bg-zinc-900/30 backdrop-blur-md">
+            <Skeleton className="h-4 w-40" />
+          </header>
+          <div className="flex-1 p-6 space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+              ))}
+            </div>
+            <Skeleton className="h-64 w-full rounded-2xl" />
+            <Skeleton className="h-48 w-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // If on onboarding screen, render fullscreen onboarding content without sidebar
