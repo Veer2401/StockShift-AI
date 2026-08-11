@@ -75,7 +75,7 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Season", sans-serif;
+    font-family: var(--font-season), "Season", sans-serif;
     line-height: 110%;
     letter-spacing: normal;
     font-feature-settings: "calt" 1;

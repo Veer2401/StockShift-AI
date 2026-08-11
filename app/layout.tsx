@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { AuthProvider } from "@/_lib/auth-context";
 import { InventoryProvider } from "@/_lib/inventory-context";
@@ -8,6 +9,12 @@ import { LenisProvider } from "./components/LenisProvider";
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+
+const season = localFont({
+  src: "../public/fonts/SeasonCollectionVF-TRIAL.woff2",
+  variable: "--font-season",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,7 +32,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`font-sans ${inter.variable} antialiased bg-background text-foreground`}>
+      <head>
+        <link
+          rel="preload"
+          href="/fonts/SeasonCollectionVF-TRIAL.woff2"
+          as="font"
+          type="font/woff2"
+          crossOrigin="anonymous"
+        />
+      </head>
+      <body className={`font-sans ${season.variable} ${inter.variable} antialiased bg-background text-foreground`}>
         <LenisProvider>
           <AuthProvider>
             <InventoryProvider>{children}</InventoryProvider>

@@ -7,6 +7,7 @@ const config: Config = {
   	extend: {
   		fontFamily: {
   			sans: [
+  				"var(--font-season)",
   				"Season",
   				"sans-serif"
   			]
