@@ -36,14 +36,25 @@ function FormattedMessage({ text }: { text: string }) {
   const lines = text.split("\n");
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-2">
       {lines.map((line, lineIdx) => {
-        if (!line.trim()) return <div key={lineIdx} className="h-1" />;
+        const trimmed = line.trim();
+        if (!trimmed) return null;
+
+        const isHeader =
+          trimmed.startsWith("📊") ||
+          trimmed.startsWith("💰") ||
+          trimmed.startsWith("⚠️") ||
+          trimmed.startsWith("✅") ||
+          trimmed.startsWith("📦") ||
+          trimmed.startsWith("👋");
+
+        const isBullet = trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*");
+        const cleanContent = isBullet ? trimmed.replace(/^[\s•\-\*]+/, "").trim() : trimmed;
 
         // Parse **bold** substrings
-        const parts = line.split(/(\*\*.*?\*\*)/g);
-
-        const renderedLine = parts.map((part, partIdx) => {
+        const parts = cleanContent.split(/(\*\*.*?\*\*)/g);
+        const renderedParts = parts.map((part, partIdx) => {
           if (part.startsWith("**") && part.endsWith("**")) {
             return (
               <strong key={partIdx} className="font-bold text-foreground">
@@ -54,19 +65,37 @@ function FormattedMessage({ text }: { text: string }) {
           return <span key={partIdx}>{part}</span>;
         });
 
-        // Bullet point lines starting with •
-        if (line.trim().startsWith("•")) {
+        // 1. Render Metric Bullet Line as an App-Themed Box Card
+        if (isBullet) {
           return (
-            <div key={lineIdx} className="flex items-start gap-2 pl-1 py-0.5">
-              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold select-none">•</span>
-              <div className="flex-1 text-xs text-foreground/90">{renderedLine}</div>
+            <div
+              key={lineIdx}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 shadow-2xs hover:bg-emerald-500/15 transition-all duration-150 select-none"
+            >
+              <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+              <div className="flex-1 text-xs font-medium text-foreground/90 leading-snug">
+                {renderedParts}
+              </div>
             </div>
           );
         }
 
+        // 2. Render Header Line as a Prominent Section Banner
+        if (isHeader) {
+          return (
+            <div
+              key={lineIdx}
+              className="font-bold text-xs text-emerald-950 dark:text-emerald-200 bg-emerald-500/15 dark:bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/30 flex items-center gap-2 shadow-2xs"
+            >
+              {renderedParts}
+            </div>
+          );
+        }
+
+        // 3. Regular Paragraph Text
         return (
-          <div key={lineIdx} className="text-xs text-foreground/90 leading-relaxed">
-            {renderedLine}
+          <div key={lineIdx} className="text-xs text-foreground/90 leading-relaxed font-medium px-1">
+            {renderedParts}
           </div>
         );
       })}
