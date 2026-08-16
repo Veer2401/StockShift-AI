@@ -32,70 +32,79 @@ interface AgentMessage {
   };
 }
 
+function renderCleanMarkdown(str: string) {
+  const parts = str.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, idx) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return (
+        <strong key={idx} className="font-bold text-foreground">
+          {part.slice(2, -2).replace(/\*\*/g, "")}
+        </strong>
+      );
+    }
+    return <span key={idx}>{part.replace(/\*\*/g, "")}</span>;
+  });
+}
+
 function FormattedMessage({ text }: { text: string }) {
   const lines = text.split("\n");
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {lines.map((line, lineIdx) => {
         const trimmed = line.trim();
         if (!trimmed) return null;
 
-        const isHeader =
-          trimmed.startsWith("📊") ||
-          trimmed.startsWith("💰") ||
-          trimmed.startsWith("⚠️") ||
-          trimmed.startsWith("✅") ||
-          trimmed.startsWith("📦") ||
-          trimmed.startsWith("👋");
-
         const isBullet = trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*");
         const cleanContent = isBullet ? trimmed.replace(/^[\s•\-\*]+/, "").trim() : trimmed;
 
-        // Parse **bold** substrings
-        const parts = cleanContent.split(/(\*\*.*?\*\*)/g);
-        const renderedParts = parts.map((part, partIdx) => {
-          if (part.startsWith("**") && part.endsWith("**")) {
-            return (
-              <strong key={partIdx} className="font-bold text-foreground">
-                {part.slice(2, -2)}
-              </strong>
-            );
-          }
-          return <span key={partIdx}>{part}</span>;
-        });
+        const lowerContent = cleanContent.toLowerCase();
 
-        // 1. Render Metric Bullet Line as an App-Themed Box Card
-        if (isBullet) {
+        // Check if this bullet line is an inventory metric item
+        const isInventoryMetric =
+          isBullet &&
+          (lowerContent.includes("stock") ||
+            lowerContent.includes("sku") ||
+            lowerContent.includes("value") ||
+            lowerContent.includes("cost") ||
+            lowerContent.includes("retail") ||
+            lowerContent.includes("reorder") ||
+            lowerContent.includes("units") ||
+            lowerContent.includes("category") ||
+            lowerContent.includes("price") ||
+            lowerContent.includes("location") ||
+            lowerContent.includes("margin") ||
+            lowerContent.includes("threshold"));
+
+        // 1. Render Inventory Metric Line inside a styled Box Card
+        if (isInventoryMetric) {
           return (
             <div
               key={lineIdx}
-              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 shadow-2xs hover:bg-emerald-500/15 transition-all duration-150 select-none"
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 shadow-2xs hover:bg-emerald-500/15 transition-all duration-150 select-none my-1"
             >
               <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
               <div className="flex-1 text-xs font-medium text-foreground/90 leading-snug">
-                {renderedParts}
+                {renderCleanMarkdown(cleanContent)}
               </div>
             </div>
           );
         }
 
-        // 2. Render Header Line as a Prominent Section Banner
-        if (isHeader) {
+        // 2. Normal Conversation Bullet Line (e.g. suggestion list)
+        if (isBullet) {
           return (
-            <div
-              key={lineIdx}
-              className="font-bold text-xs text-emerald-950 dark:text-emerald-200 bg-emerald-500/15 dark:bg-emerald-500/20 p-2.5 rounded-xl border border-emerald-500/30 flex items-center gap-2 shadow-2xs"
-            >
-              {renderedParts}
+            <div key={lineIdx} className="flex items-start gap-2 pl-1 py-0.5 text-xs text-foreground/90">
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold select-none">•</span>
+              <div className="flex-1 leading-relaxed">{renderCleanMarkdown(cleanContent)}</div>
             </div>
           );
         }
 
-        // 3. Regular Paragraph Text
+        // 3. Normal Conversation Text (Headers, Intro text, conversation)
         return (
-          <div key={lineIdx} className="text-xs text-foreground/90 leading-relaxed font-medium px-1">
-            {renderedParts}
+          <div key={lineIdx} className="text-xs text-foreground/90 leading-relaxed font-medium">
+            {renderCleanMarkdown(cleanContent)}
           </div>
         );
       })}
