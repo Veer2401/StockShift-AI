@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useInventory } from "@/_lib/inventory-context";
 import { Button } from "@/_components/ui/button";
 import { Input } from "@/_components/ui/input";
@@ -118,6 +118,7 @@ export function AiAgentWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputQuery, setInputQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [messages, setMessages] = useState<AgentMessage[]>([
     {
@@ -126,6 +127,20 @@ export function AiAgentWidget() {
       text: "👋 Hi! I can help you add items and update stock. Try asking:\n• 'Add Smart Watch 50 units'\n• 'Add 50 stock to low stock items'",
     },
   ]);
+
+  const scrollToBottom = (smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      scrollToBottom(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    scrollToBottom(true);
+  }, [messages, isProcessing]);
 
   const handleSendMessage = () => {
     if (!inputQuery.trim()) return;
@@ -448,6 +463,7 @@ export function AiAgentWidget() {
                 Processing request...
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Footer */}
